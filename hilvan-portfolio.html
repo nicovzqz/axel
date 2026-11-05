@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hilván Portfolios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: una barra fija con pestañas; cada portfolio vive en su propio iframe y la calculadora es una hoja con ticket al costado. */
+:root{
+  --bg:#EEF1F6;--hoja:#FFFFFF;--tinta:#14305F;--suave:#51658A;--linea:#14305F;--borde:#CBD5E3;--marca:#D2331F;--marca-fg:#FFFFFF;
+  --display:'Archivo','Arial Narrow',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Consolas',monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D2145;--hoja:#112A55;--tinta:#E8F0FB;--suave:#A6BBDA;--linea:#BDD0EA;--borde:#2A4676;--marca:#FF8A6B;--marca-fg:#0D2145;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D2145;--hoja:#112A55;--tinta:#E8F0FB;--suave:#A6BBDA;--linea:#BDD0EA;--borde:#2A4676;--marca:#FF8A6B;--marca-fg:#0D2145;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;display:flex;flex-direction:column;background:var(--bg);color:var(--tinta);font:400 16px/1.5 var(--display)}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--marca);outline-offset:2px}
+
+.bar{flex:none;display:flex;align-items:center;gap:8px 20px;flex-wrap:wrap;background:var(--hoja);border-bottom:1.5px solid var(--linea);padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{font:800 18px/1 var(--display);font-stretch:120%}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;min-width:0}
+.tabs button{background:transparent;border:1.5px solid transparent;padding:7px 11px;font:500 14px/1 var(--mono);cursor:pointer}
+.tabs button:hover{border-color:var(--linea)}
+.tabs button[aria-selected=true]{background:var(--tinta);color:var(--hoja);border-color:var(--tinta)}
+.tabs .calc-tab{border-color:var(--marca);color:var(--marca);font-weight:600}
+.tabs .calc-tab[aria-selected=true]{background:var(--marca);color:var(--marca-fg);border-color:var(--marca)}
+
+main{flex:1;min-height:0;position:relative}
+iframe{display:block;width:100%;height:100%;border:0}
+#calculadora{height:100%;overflow-y:auto}
+.calc-in{max-width:1040px;margin-inline:auto;padding-block:36px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.calc-in h1{margin:0 0 6px;font:800 clamp(30px,5vw,50px)/1.04 var(--display);font-stretch:112%;letter-spacing:-.015em;text-wrap:balance}
+.intro{margin:0 0 24px;color:var(--suave);max-width:38em}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.92fr);gap:24px;align-items:start}
+form{display:grid;gap:18px;background:var(--hoja);border:1.5px solid var(--linea);padding:22px;min-width:0}
+.campo{display:grid;gap:6px;border:0;padding:0;margin:0;min-width:0}
+.campo>label,.campo>legend{font:500 12px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--suave);padding:0}
+.campo legend{margin-bottom:6px}
+select,input[type=number]{width:100%;padding:10px;background:var(--bg);border:1.5px solid var(--linea);border-radius:0;font-size:17px}
+.dos{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.check{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.check input{width:18px;height:18px;margin:3px 0 0;flex:none;accent-color:var(--marca)}
+.aviso{margin:0;font-size:14px;line-height:1.4}
+#aviso{color:var(--marca);font-weight:600}
+#escala{color:var(--suave)}
+
+.ticket{background:var(--hoja);border:1.5px solid var(--linea);padding:22px;font-family:var(--mono);font-size:14px;min-width:0}
+.ticket h2{margin:0 0 3px;font:600 13px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.ticket .detalle{margin:0 0 14px;color:var(--suave);font-size:13px;line-height:1.4}
+.ticket dl{margin:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 14px;border-block:1px dashed var(--suave);padding-block:12px}
+.ticket dt{margin:0}
+.ticket dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding-block:14px 4px}
+.total span{font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.total b{font:800 clamp(30px,4.4vw,40px)/1.05 var(--display);font-variant-numeric:tabular-nums}
+.sub{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums;padding-top:5px}
+.legal{margin:16px 0 0;color:var(--suave);font-size:12.5px;line-height:1.45}
+@media (max-width:760px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:420px){.dos{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<header class="bar">
+  <span class="brand">Hilván</span>
+  <div class="tabs" role="tablist" aria-label="Portfolios" id="tabs">
+    <button type="button" role="tab" data-v="promo" aria-selected="true">Promo</button>
+    <button type="button" role="tab" data-v="ficha" aria-selected="false">Ficha Técnica</button>
+    <button type="button" role="tab" data-v="perchero" aria-selected="false">Perchero</button>
+    <button type="button" role="tab" data-v="calculadora" class="calc-tab" aria-selected="false">Calculadora</button>
+  </div>
+</header>
+
+<main>
+  <iframe id="promo" title="Portfolio Promo" srcdoc="<!doctype html><html lang=&quot;es&quot;><head><meta charset=&quot;utf-8&quot;><meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1,viewport-fit=cover&quot;><style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style><title>Hilván Promo</title>
+<meta name=&quot;claude:viewport-fit-sides&quot; content=&quot;cover&quot;>
+<link rel=&quot;preconnect&quot; href=&quot;https://fonts.googleapis.com&quot;>
+<link rel=&quot;preconnect&quot; href=&quot;https://fonts.gstatic.com&quot; crossorigin>
+<link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=Alfa+Slab+One&amp;family=Barlow:wght@400;500;600;700&amp;family=Barlow+Condensed:wght@600;700;800&amp;display=swap&quot;>
+<style>
+/* Layout: colegial y ruidoso. Bandas de color llenas, con el buzo editable como protagonista del primer pantallazo. */
+:root{
+  color-scheme:light;
+  --azul:#1B2FD0;--amarillo:#FFD21E;--rosa:#FF5C95;--papel:#F1F2FF;--tinta:#0C1250;--blanco:#FFFFFF;
+  --display:'Alfa Slab One','Rockwell',Georgia,serif;
+  --body:'Barlow','Segoe UI',Arial,sans-serif;
+  --cond:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--papel);color:var(--tinta);font:500 17px/1.5 var(--body);overflow-x:hidden}
+a{color:inherit}
+.wrap{max-width:1200px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:400;line-height:1.02;text-wrap:balance}
+p{margin:0}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--rosa);outline-offset:2px}
+
+.top{background:var(--azul);color:var(--blanco)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:18px}
+.logo{font:400 26px/1 var(--display);text-decoration:none}
+.logo span{color:var(--amarillo)}
+.bar nav{display:flex;gap:20px;flex-wrap:wrap;font:700 18px/1 var(--cond);letter-spacing:.06em;text-transform:uppercase}
+.bar nav a{text-decoration:none;border-bottom:2px solid transparent;padding-bottom:2px}
+.bar nav a:hover{border-color:var(--amarillo)}
+
+.hero{background:var(--azul);color:var(--blanco);padding-bottom:64px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:40px;align-items:center;padding-top:24px}
+.hero h1{font-size:clamp(46px,7.4vw,96px);letter-spacing:-.005em}
+.hero h1 em{font-style:normal;color:var(--amarillo)}
+.hero-copy{display:grid;gap:24px;justify-items:start}
+.lead{font-size:20px;max-width:32em}
+.deadline{display:inline-block;background:var(--rosa);color:var(--tinta);font:800 21px/1.15 var(--cond);letter-spacing:.02em;text-transform:uppercase;padding:12px 16px;transform:rotate(-1.5deg)}
+
+.lab{background:var(--amarillo);color:var(--tinta);padding:20px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:center;box-shadow:10px 10px 0 var(--tinta)}
+.lab svg{width:100%;height:auto;display:block}
+.ctrls{display:grid;gap:16px;min-width:0}
+.ctrls label,.ctrls .lbl{display:block;font:800 16px/1 var(--cond);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.ctrls input{width:100%;padding:10px;border:3px solid var(--tinta);background:var(--blanco);border-radius:0;font:700 20px/1 var(--cond);text-transform:uppercase;letter-spacing:.04em}
+.sw{display:flex;flex-wrap:wrap;gap:7px}
+.sw button{width:34px;height:34px;padding:0;border:3px solid var(--tinta);cursor:pointer;background:var(--c)}
+.sw button[aria-pressed=true]{box-shadow:0 0 0 3px var(--amarillo),0 0 0 6px var(--tinta)}
+.seg{display:flex;flex-wrap:wrap;gap:0}
+.seg button{flex:1;min-width:44px;background:transparent;border:3px solid var(--tinta);margin-left:-3px;padding:7px 0;font:800 19px/1 var(--cond);cursor:pointer}
+.seg button:first-child{margin-left:0}
+.seg button[aria-pressed=true]{background:var(--tinta);color:var(--amarillo)}
+.summary{font:600 17px/1.25 var(--cond);min-height:2.5em}
+.btn{display:inline-block;background:var(--tinta);color:var(--amarillo);border:0;text-decoration:none;text-align:center;font:800 20px/1 var(--cond);letter-spacing:.05em;text-transform:uppercase;padding:14px 18px;cursor:pointer}
+.btn:hover{background:var(--rosa);color:var(--tinta)}
+
+.tick{background:var(--tinta);color:var(--amarillo);overflow:hidden;white-space:nowrap;font:800 22px/1 var(--cond);letter-spacing:.06em;text-transform:uppercase;padding-block:14px}
+.tick div{display:inline-block;animation:slide 38s linear infinite}
+.tick span{padding-inline:18px}
+@keyframes slide{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.tick div{animation:none}html{scroll-behavior:auto}}
+
+section{padding-block:72px}
+.head{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:32px}
+.head h2{font-size:clamp(36px,5vw,62px);color:var(--azul)}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.filters button{background:transparent;border:3px solid var(--tinta);padding:8px 14px;font:800 18px/1 var(--cond);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.filters button[aria-pressed=true]{background:var(--tinta);color:var(--amarillo)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.work{display:grid;grid-template-rows:auto 1fr;background:var(--blanco);border:3px solid var(--tinta)}
+.work figure{margin:0;padding:18px 36px;background:var(--t);border-bottom:3px solid var(--tinta)}
+.work svg{width:100%;height:auto;display:block}
+.work .txt{padding:16px 18px;display:grid;gap:6px;align-content:start}
+.work h3{font-size:24px}
+.work .meta{font:600 17px/1.25 var(--cond);letter-spacing:.02em}
+.kind{font:800 15px/1 var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--azul)}
+
+.steps{background:var(--amarillo)}
+.steps h2{font-size:clamp(36px,5vw,62px);margin-bottom:32px}
+.steps ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:20px;counter-reset:s}
+.steps li{counter-increment:s;display:grid;gap:8px;align-content:start;border-top:5px solid var(--tinta);padding-top:12px;min-width:0}
+.steps li::before{content:counter(s);font:400 48px/1 var(--display);color:var(--azul)}
+.steps h3{font:800 24px/1.05 var(--cond);text-transform:uppercase;letter-spacing:.02em}
+.steps p{font-size:16px;line-height:1.4}
+
+.contact{background:var(--azul);color:var(--blanco)}
+.contact .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;align-items:start}
+.contact h2{font-size:clamp(38px,5.4vw,70px);color:var(--amarillo);margin-bottom:20px}
+.contact dl{display:grid;gap:12px;margin:24px 0 0}
+.contact dt{font:800 15px/1 var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--amarillo)}
+.contact dd{margin:3px 0 0;font-size:20px;font-weight:600}
+form{display:grid;gap:14px;background:var(--papel);color:var(--tinta);padding:24px;box-shadow:10px 10px 0 var(--rosa)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+form label{display:grid;gap:5px;font:800 16px/1 var(--cond);letter-spacing:.08em;text-transform:uppercase}
+form input,form textarea{width:100%;padding:10px;border:3px solid var(--tinta);border-radius:0;background:var(--blanco);font:500 17px/1.35 var(--body);letter-spacing:0;text-transform:none}
+#gracias{font-weight:600;margin:0}
+footer{background:var(--tinta);color:var(--papel);padding-block:22px;font-size:15px}
+
+@media (max-width:980px){
+  .hero-grid,.contact .cols{grid-template-columns:minmax(0,1fr)}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps ol{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:560px){
+  .lab{grid-template-columns:minmax(0,1fr);box-shadow:6px 6px 0 var(--tinta)}
+  .lab svg{max-width:300px;margin-inline:auto}
+  .grid,.steps ol,.two{grid-template-columns:minmax(0,1fr)}
+  form{box-shadow:6px 6px 0 var(--rosa)}
+  section{padding-block:52px}
+}
+</style>
+
+<header class=&quot;top&quot;>
+  <div class=&quot;wrap bar&quot;>
+    <a class=&quot;logo&quot; href=&quot;#inicio&quot;>HILVÁN<span>.</span></a>
+    <nav aria-label=&quot;Secciones&quot;>
+      <a href=&quot;#promos&quot;>Promos</a>
+      <a href=&quot;#como&quot;>Cómo funciona</a>
+      <a href=&quot;#presupuesto&quot;>Presupuesto</a>
+    </nav>
+  </div>
+</header>
+
+<div class=&quot;hero&quot; id=&quot;inicio&quot;>
+  <div class=&quot;wrap hero-grid&quot;>
+    <div class=&quot;hero-copy&quot;>
+      <h1>Tu promo, con tu <em>apodo</em> en la espalda.</h1>
+      <p class=&quot;lead&quot;>Hacemos buzos, camperas y remeras de egresados, desde el primer boceto hasta la entrega en el colegio. Probá cómo quedaría el tuyo.</p>
+      <p class=&quot;deadline&quot;>Cerrá antes del 15/12 y lo estrenás en marzo</p>
+    </div>
+    <div class=&quot;lab&quot;>
+      <div id=&quot;preview&quot; role=&quot;img&quot; aria-label=&quot;Espalda de un buzo con el apodo, el número de promo hecho con nombres y el curso&quot;></div>
+      <div class=&quot;ctrls&quot;>
+        <div><label for=&quot;apodo&quot;>Tu apodo</label><input id=&quot;apodo&quot; maxlength=&quot;12&quot; value=&quot;Pelu&quot; autocomplete=&quot;off&quot;></div>
+        <div><span class=&quot;lbl&quot;>Color</span><div class=&quot;sw&quot; id=&quot;colores&quot;></div></div>
+        <div><span class=&quot;lbl&quot;>Promo</span><div class=&quot;seg&quot; id=&quot;promos-sel&quot;></div></div>
+        <p class=&quot;summary&quot; id=&quot;resumen&quot; aria-live=&quot;polite&quot;></p>
+        <a class=&quot;btn&quot; href=&quot;#presupuesto&quot; id=&quot;pedir&quot;>Pedir este diseño</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class=&quot;tick&quot; aria-hidden=&quot;true&quot;><div id=&quot;ticker&quot;></div></div>
+
+<section id=&quot;promos&quot;>
+  <div class=&quot;wrap&quot;>
+    <div class=&quot;head&quot;>
+      <h2>Promos que ya salieron</h2>
+      <div class=&quot;filters&quot; id=&quot;filtros&quot; role=&quot;group&quot; aria-label=&quot;Filtrar trabajos&quot;></div>
+    </div>
+    <div class=&quot;grid&quot; id=&quot;trabajos&quot;></div>
+  </div>
+</section>
+
+<section class=&quot;steps&quot; id=&quot;como&quot;>
+  <div class=&quot;wrap&quot;>
+    <h2>De la idea al colegio en cinco pasos</h2>
+    <ol>
+      <li><h3>Boceto</h3><p>Nos pasan ideas, apodos y lista del curso. En 48 horas reciben el diseño.</p></li>
+      <li><h3>Prueba de talles</h3><p>Vamos al colegio con el muestrario, de XS a 3XL, y anotamos el talle de cada uno.</p></li>
+      <li><h3>Seña</h3><p>Con el 50% del total reservamos tela y lugar en el taller.</p></li>
+      <li><h3>Producción</h3><p>Entre 25 y 35 días. Les mandamos fotos del corte y del estampado.</p></li>
+      <li><h3>Entrega</h3><p>Llevamos cada buzo al colegio, embolsado y con el nombre de su dueño.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class=&quot;contact&quot; id=&quot;presupuesto&quot;>
+  <div class=&quot;wrap cols&quot;>
+    <div>
+      <h2>Pedí presupuesto para tu curso</h2>
+      <p class=&quot;lead&quot;>Desde 15 prendas. El boceto y la prueba de talles no tienen costo.</p>
+      <dl>
+        <div><dt>WhatsApp</dt><dd>11 5555-0142</dd></div>
+        <div><dt>Instagram</dt><dd>@hilvan.promo</dd></div>
+        <div><dt>Taller</dt><dd>Lunes a viernes, de 9 a 18</dd></div>
+      </dl>
+    </div>
+    <form id=&quot;form&quot;>
+      <div class=&quot;two&quot;>
+        <label>Tu nombre<input id=&quot;f-nombre&quot; required value=&quot;Mili&quot;></label>
+        <label>Cantidad<input id=&quot;f-cant&quot; inputmode=&quot;numeric&quot; value=&quot;32&quot;></label>
+      </div>
+      <label>Colegio y curso<input id=&quot;f-colegio&quot; value=&quot;Escuela Norte, 5° B&quot;></label>
+      <label>Qué tienen en mente<textarea id=&quot;f-msg&quot; rows=&quot;4&quot;></textarea></label>
+      <button class=&quot;btn&quot; type=&quot;submit&quot;>Enviar consulta</button>
+      <p id=&quot;gracias&quot; role=&quot;status&quot; hidden>Este sitio es una muestra, así que la consulta no se envió. En la versión real llegaría a su WhatsApp.</p>
+    </form>
+  </div>
+</section>
+
+<footer><div class=&quot;wrap&quot;>Sitio de muestra. La marca Hilván, los colegios, los trabajos, los plazos y los datos de contacto son ficticios.</div></footer>
+
+<script>
+const NAMES='Juana Sol Tomi Lucho Mili Facu Cami Nacho Flor Santi Pili Tobi Rochi Gonza Male Bauti Vicky Joaco Abril Fran'.split(' ');
+const esc=s=>String(s).replace(/[&amp;<>&quot;]/g,c=>({'&amp;':'&amp;amp;','<':'&amp;lt;','>':'&amp;gt;','&quot;':'&amp;quot;'}[c]));
+let uid=0;
+
+function numberBlock(n,ink,y,size){
+  const id='n'+(++uid);let rows='';
+  for(let ry=y-size*.78,i=uid;ry<y+6;ry+=7.4,i+=3){
+    let line='';for(let k=0;k<14;k++)line+=NAMES[(i+k*7)%NAMES.length]+' ';
+    rows+=`<text x=&quot;74&quot; y=&quot;${ry.toFixed(1)}&quot; font-size=&quot;7.4&quot;>${line}</text>`;
+  }
+  const num=`x=&quot;150&quot; y=&quot;${y}&quot; font-size=&quot;${size}&quot; text-anchor=&quot;middle&quot; font-family=&quot;'Alfa Slab One',Rockwell,serif&quot;`;
+  return `<clipPath id=&quot;${id}&quot;><text ${num}>${n}</text></clipPath>
+    <text ${num} fill=&quot;${ink}&quot; opacity=&quot;.28&quot;>${n}</text>
+    <g clip-path=&quot;url(#${id})&quot; fill=&quot;${ink}&quot; font-family=&quot;'Barlow Condensed',Arial,sans-serif&quot; font-weight=&quot;700&quot;>${rows}</g>`;
+}
+function backText(o){
+  const a=esc(o.apodo||'').toUpperCase(),sz=a.length<=6?30:a.length<=9?23:18;
+  return `<text x=&quot;150&quot; y=&quot;${o.top}&quot; text-anchor=&quot;middle&quot; font-family=&quot;'Barlow Condensed',Arial,sans-serif&quot; font-weight=&quot;800&quot; font-size=&quot;${sz}&quot; letter-spacing=&quot;1&quot; fill=&quot;${o.ink}&quot;>${a}</text>
+    ${numberBlock(o.promo,o.ink,o.top+102,92)}
+    <text x=&quot;150&quot; y=&quot;${o.top+126}&quot; text-anchor=&quot;middle&quot; font-family=&quot;'Barlow Condensed',Arial,sans-serif&quot; font-weight=&quot;800&quot; font-size=&quot;15&quot; letter-spacing=&quot;5&quot; fill=&quot;${o.ink}&quot;>PROMO</text>
+    <text x=&quot;150&quot; y=&quot;${o.top+144}&quot; text-anchor=&quot;middle&quot; font-family=&quot;'Barlow Condensed',Arial,sans-serif&quot; font-weight=&quot;700&quot; font-size=&quot;12&quot; letter-spacing=&quot;2&quot; fill=&quot;${o.ink}&quot;>${esc(o.curso||'')}</text>`;
+}
+function hoodie(o){
+  const sl=o.sleeve||o.color,edge='#0C1250';
+  const hood=o.jacket
+    ?`<path d=&quot;M108 60C120 74 180 74 192 60L192 50C180 60 120 60 108 50Z&quot; fill=&quot;${sl}&quot; stroke=&quot;${edge}&quot; stroke-width=&quot;2&quot;/>`
+    :`<path d=&quot;M100 66C92 30 118 10 150 10C182 10 208 30 200 66C180 78 120 78 100 66Z&quot; fill=&quot;${o.color}&quot; stroke=&quot;${edge}&quot; stroke-width=&quot;2&quot;/><path d=&quot;M150 12V72&quot; stroke=&quot;${edge}&quot; stroke-opacity=&quot;.3&quot; stroke-width=&quot;1.5&quot; fill=&quot;none&quot;/>`;
+  return `<svg viewBox=&quot;0 0 300 340&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; aria-hidden=&quot;true&quot;>
+    <path d=&quot;M100 62L62 78C48 86 40 100 36 120L14 280C13 290 16 296 24 297L54 300C60 300 64 296 65 290L78 170V100Z&quot; fill=&quot;${sl}&quot; stroke=&quot;${edge}&quot; stroke-width=&quot;2&quot;/>
+    <path d=&quot;M200 62L238 78C252 86 260 100 264 120L286 280C287 290 284 296 276 297L246 300C240 300 236 296 235 290L222 170V100Z&quot; fill=&quot;${sl}&quot; stroke=&quot;${edge}&quot; stroke-width=&quot;2&quot;/>
+    <path d=&quot;M100 62H200L222 100V322H78V100Z&quot; fill=&quot;${o.color}&quot; stroke=&quot;${edge}&quot; stroke-width=&quot;2&quot;/>
+    <path d=&quot;M78 304H222V322H78ZM16 268L68 272L65 290C64 296 60 300 54 300L24 297C16 296 13 290 14 280ZM284 268L232 272L235 290C236 296 240 300 246 300L276 297C284 296 287 290 286 280Z&quot; fill=&quot;#000&quot; fill-opacity=&quot;.14&quot;/>
+    ${hood}${backText({...o,top:o.jacket?108:112})}
+  </svg>`;
+}
+function tee(o){
+  const edge='#0C1250';
+  return `<svg viewBox=&quot;0 0 300 340&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; aria-hidden=&quot;true&quot;>
+    <path d=&quot;M105 30C120 44 180 44 195 30L250 52L292 120L250 146L232 118V318H68V118L50 146L8 120L50 52Z&quot; fill=&quot;${o.color}&quot; stroke=&quot;${edge}&quot; stroke-width=&quot;2&quot;/>
+    <path d=&quot;M105 30C120 44 180 44 195 30L190 40C176 52 124 52 110 40Z&quot; fill=&quot;#000&quot; fill-opacity=&quot;.14&quot;/>
+    ${backText({...o,top:102})}
+  </svg>`;
+}
+
+/* Probador */
+const COLORS=[
+  {n:'Azul noche',c:'#141B4D',i:'#FFD21E'},{n:'Bordó',c:'#6E1230',i:'#FFFFFF'},
+  {n:'Verde inglés',c:'#0F4A38',i:'#FFE9A8'},{n:'Gris melange',c:'#B9BCC6',i:'#141B4D'},
+  {n:'Rosa chicle',c:'#FF8DB6',i:'#141B4D'},{n:'Crudo',c:'#F6EEDC',i:'#B3202A'}];
+const state={color:0,promo:'27'};
+const $=id=>document.getElementById(id);
+function draw(){
+  const c=COLORS[state.color],ap=$('apodo').value.trim()||'Tu apodo';
+  $('preview').innerHTML=hoodie({color:c.c,ink:c.i,apodo:ap,promo:state.promo,curso:'5° B'});
+  $('resumen').textContent=`Buzo canguro de frisa, 320 g. ${c.n}, apodo ${ap.toUpperCase()}, promo ${state.promo}.`;
+  [...$('colores').children].forEach((b,i)=>b.setAttribute('aria-pressed',i===state.color));
+  [...$('promos-sel').children].forEach(b=>b.setAttribute('aria-pressed',b.textContent===state.promo));
+}
+COLORS.forEach((c,i)=>{const b=document.createElement('button');b.type='button';b.style.setProperty('--c',c.c);b.title=c.n;b.setAttribute('aria-label',c.n);b.onclick=()=>{state.color=i;draw()};$('colores').append(b)});
+['26','27','28'].forEach(p=>{const b=document.createElement('button');b.type='button';b.textContent=p;b.onclick=()=>{state.promo=p;draw()};$('promos-sel').append(b)});
+$('apodo').addEventListener('input',draw);
+$('pedir').addEventListener('click',()=>{$('f-msg').value=$('resumen').textContent});
+draw();
+
+/* Ticker */
+const T=['Frisa 320 g','Bordado','Serigrafía','Talles XS a 3XL','Probador en tu colegio','Un buzo, un apodo','Desde 15 prendas'];
+$('ticker').innerHTML=[...T,...T,...T,...T].map(t=>`<span>${t}</span><span>✶</span>`).join('');
+
+/* Trabajos */
+const WORKS=[
+ {k:'Buzos',t:'var(--amarillo)',title:'Promo 26, 5° B',school:'Escuela Norte',meta:'34 buzos canguro. Apodo bordado, número en serigrafía.',art:()=>hoodie({color:'#141B4D',ink:'#FFD21E',apodo:'Rochi',promo:'26',curso:'5° B'})},
+ {k:'Camperas',t:'var(--rosa)',title:'Promo 26, 6° A',school:'Técnica 9',meta:'28 camperas universitarias con mangas en contraste y parche bordado.',art:()=>hoodie({jacket:1,color:'#FFFFFF',sleeve:'#1B2FD0',ink:'#1B2FD0',apodo:'Gonza',promo:'26',curso:'6° A'})},
+ {k:'Remeras',t:'var(--azul)',title:'UPD 26',school:'Colegio del Lago',meta:'61 remeras para el último primer día, con estampa flúo.',art:()=>tee({color:'#FFD21E',ink:'#0C1250',apodo:'Facu',promo:'26',curso:'UPD'})},
+ {k:'Buzos',t:'var(--papel)',title:'Promo 25, 5° C',school:'Instituto Alas',meta:'41 buzos bordó con nombres del curso dentro del número.',art:()=>hoodie({color:'#6E1230',ink:'#FFFFFF',apodo:'Abril',promo:'25',curso:'5° C'})},
+ {k:'Remeras',t:'var(--rosa)',title:'Viaje de egresados',school:'Escuela Norte',meta:'52 remeras livianas de jersey 24/1 para el viaje.',art:()=>tee({color:'#FFFFFF',ink:'#1B2FD0',apodo:'Tobi',promo:'25',curso:'Viaje'})},
+ {k:'Buzos',t:'var(--azul)',title:'Promo 25, 5° A',school:'Colegio del Lago',meta:'26 buzos en crudo con estampa roja de dos tintas.',art:()=>hoodie({color:'#F6EEDC',ink:'#B3202A',apodo:'Vicky',promo:'25',curso:'5° A'})},
+ {k:'Camperas',t:'var(--amarillo)',title:'Promo 25, 6° B',school:'Técnica 9',meta:'22 camperas verde inglés con mangas crudas.',art:()=>hoodie({jacket:1,color:'#0F4A38',sleeve:'#F6EEDC',ink:'#FFE9A8',apodo:'Joaco',promo:'25',curso:'6° B'})},
+ {k:'Buzos',t:'var(--amarillo)',title:'Promo 24, 5° D',school:'Instituto Alas',meta:'37 buzos gris melange con número a una tinta.',art:()=>hoodie({color:'#B9BCC6',ink:'#141B4D',apodo:'Male',promo:'24',curso:'5° D'})},
+ {k:'Remeras',t:'var(--papel)',title:'UPD 25',school:'Técnica 9',meta:'48 remeras negras con estampa en dos colores.',art:()=>tee({color:'#1A1A24',ink:'#FF8DB6',apodo:'Bauti',promo:'25',curso:'UPD'})}
+];
+$('trabajos').innerHTML=WORKS.map(w=>`<article class=&quot;work&quot; data-k=&quot;${w.k}&quot;>
+  <figure style=&quot;--t:${w.t}&quot;>${w.art()}</figure>
+  <div class=&quot;txt&quot;><span class=&quot;kind&quot;>${w.k}</span><h3>${w.title}</h3><p class=&quot;meta&quot;><strong>${w.school}.</strong> ${w.meta}</p></div>
+</article>`).join('');
+['Todos','Buzos','Camperas','Remeras'].forEach(f=>{
+  const b=document.createElement('button');b.type='button';b.textContent=f;b.setAttribute('aria-pressed',f==='Todos');
+  b.onclick=()=>{
+    [...$('filtros').children].forEach(x=>x.setAttribute('aria-pressed',x===b));
+    document.querySelectorAll('.work').forEach(w=>{w.hidden=f!=='Todos'&amp;&amp;w.dataset.k!==f});
+  };
+  $('filtros').append(b);
+});
+
+$('form').addEventListener('submit',e=>{e.preventDefault();$('gracias').hidden=false});
+</script>
+<script>document.addEventListener(&quot;click&quot;,e=>{const a=e.target.closest('a[href^=&quot;#&quot;]');if(!a)return;e.preventDefault();const t=document.getElementById(a.getAttribute(&quot;href&quot;).slice(1));if(t)t.scrollIntoView()});</script>"></iframe>
+  <iframe id="ficha" title="Portfolio Ficha Técnica" srcdoc="<!doctype html><html lang=&quot;es&quot;><head><meta charset=&quot;utf-8&quot;><meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1,viewport-fit=cover&quot;><style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style><title>Hilván Ficha Técnica</title>
+<meta name=&quot;claude:viewport-fit-sides&quot; content=&quot;cover&quot;>
+<link rel=&quot;preconnect&quot; href=&quot;https://fonts.googleapis.com&quot;>
+<link rel=&quot;preconnect&quot; href=&quot;https://fonts.gstatic.com&quot; crossorigin>
+<link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..900&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap&quot;>
+<style>
+/* Layout: el sitio como un juego de planos de moldería. Cada sección es una hoja con su rótulo, sobre papel cuadriculado. */
+:root{
+  --papel:#F5F7F4;--hoja:#FFFFFF;--tinta:#14305F;--suave:#51658A;--grid:#DCE5EE;--marca:#D2331F;--marca-fg:#FFFFFF;--linea:#14305F;
+  --display:'Archivo','Arial Narrow',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Consolas',monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=&quot;light&quot;]){
+  --papel:#0D2145;--hoja:#112A55;--tinta:#E8F0FB;--suave:#A6BBDA;--grid:#1A3361;--marca:#FF8A6B;--marca-fg:#0D2145;--linea:#BDD0EA;color-scheme:dark}}
+:root[data-theme=&quot;dark&quot;]{
+  --papel:#0D2145;--hoja:#112A55;--tinta:#E8F0FB;--suave:#A6BBDA;--grid:#1A3361;--marca:#FF8A6B;--marca-fg:#0D2145;--linea:#BDD0EA;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{color:var(--tinta);font:400 16px/1.55 var(--display);background-color:var(--papel);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+a{color:inherit}
+h1,h2,h3,p{margin:0}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--marca);outline-offset:2px}
+.wrap{max-width:1200px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--mono)}
+.label{font:500 12px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--suave)}
+
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-block:18px}
+.logo{font:800 24px/1 var(--display);font-stretch:125%;letter-spacing:-.01em;text-decoration:none}
+.logo i{font-style:normal;color:var(--marca)}
+.top nav{display:flex;gap:18px;flex-wrap:wrap;font:500 13px/1 var(--mono);letter-spacing:.04em;text-transform:uppercase}
+.top nav a{text-decoration:none}
+.top nav a:hover{color:var(--marca)}
+
+.sheet{background:var(--hoja);border:1.5px solid var(--linea);margin-bottom:28px;min-width:0}
+.sheet-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:9px 16px;border-bottom:1.5px solid var(--linea)}
+.sheet-body{padding:28px 24px}
+.sheet h2{font:800 clamp(28px,4vw,46px)/1.04 var(--display);font-stretch:112%;letter-spacing:-.015em;text-wrap:balance;margin-bottom:24px}
+
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)}
+.hero-copy{padding:32px 24px;display:flex;flex-direction:column;justify-content:space-between;gap:32px;border-right:1.5px solid var(--linea);min-width:0}
+.hero h1{font:800 clamp(38px,5.6vw,72px)/.98 var(--display);font-stretch:125%;letter-spacing:-.025em;text-wrap:balance}
+.hero h1 span{color:var(--marca)}
+.lead{font-size:19px;max-width:30em;margin-top:18px}
+.rotulo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1.5px solid var(--linea)}
+.rotulo div{padding:9px 11px;border-right:1px solid var(--linea);min-width:0}
+.rotulo div:last-child{border-right:0}
+.rotulo b{display:block;font:600 16px/1.2 var(--mono);margin-top:3px}
+.draw{padding:20px;min-width:0}
+.draw svg{display:block;width:100%;height:auto;max-height:520px}
+.flat-line{fill:none;stroke:var(--linea);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.stitch{fill:none;stroke:var(--linea);stroke-width:1.2;stroke-dasharray:4 3}
+.dim{fill:none;stroke:var(--marca);stroke-width:1.3}
+.dim-t{fill:var(--marca);font:600 13px var(--mono);letter-spacing:.03em}
+.pin{fill:var(--hoja);stroke:var(--tinta);stroke-width:1.3}
+.pin-t{fill:var(--tinta);font:600 12px var(--mono);text-anchor:middle}
+#talle-g{transition:transform .35s ease;transform-origin:260px 240px}
+@media (prefers-reduced-motion:reduce){#talle-g{transition:none}html{scroll-behavior:auto}}
+.sizes{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:10px}
+.sizes .label{margin-right:6px}
+.sizes button{min-width:44px;padding:7px 8px;background:transparent;border:1.5px solid var(--linea);font:600 14px/1 var(--mono);cursor:pointer}
+.sizes button[aria-pressed=true]{background:var(--marca);border-color:var(--marca);color:var(--marca-fg)}
+.key{list-style:none;padding:0;margin:16px 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 18px;font-size:14px;line-height:1.35}
+.key b{font-family:var(--mono);color:var(--marca);margin-right:4px}
+
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.filters button{padding:8px 12px;background:transparent;border:1.5px solid var(--linea);font:500 13px/1 var(--mono);text-transform:uppercase;letter-spacing:.04em;cursor:pointer}
+.filters button[aria-pressed=true]{background:var(--tinta);color:var(--hoja)}
+.fichas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1.5px solid var(--linea);border-left:1.5px solid var(--linea)}
+.ficha{border-right:1.5px solid var(--linea);border-bottom:1.5px solid var(--linea);padding:16px;display:grid;gap:10px;align-content:start;min-width:0}
+.ficha header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.ficha .cod{font:600 13px var(--mono);color:var(--marca)}
+.ficha h3{font:700 22px/1.1 var(--display);font-stretch:105%}
+.ficha svg{width:62%;max-width:190px;height:auto;display:block;margin:6px auto}
+.spec{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:14px;line-height:1.35;border-top:1px dashed var(--suave);padding-top:10px}
+.spec dt{font:500 11.5px/1.5 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--suave)}
+.spec dd{margin:0;font-variant-numeric:tabular-nums}
+
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:15px}
+th{font:500 12px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--suave);text-align:left;padding:8px 12px;border-bottom:1.5px solid var(--linea)}
+td{padding:12px;border-bottom:1px solid var(--grid);vertical-align:top;font-variant-numeric:tabular-nums}
+td:first-child{font-weight:700}
+
+.ops{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.op{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;align-items:center;border:1.5px solid var(--linea);padding:14px}
+.op svg{width:100%;height:auto;display:block}
+.op h3{font:700 21px/1.12 var(--display);font-stretch:105%;margin-block:4px 6px}
+.op p{font-size:15px;line-height:1.4}
+.op .res{font:500 13px/1.4 var(--mono);margin-top:7px;color:var(--suave)}
+
+.gantt{display:grid;gap:8px;min-width:560px}
+.g-row{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center}
+.g-track{position:relative;height:24px;background-image:linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:calc(100%/6) 100%;border-right:1px solid var(--grid)}
+.g-bar{position:absolute;top:3px;bottom:3px;background:var(--tinta)}
+.g-row:last-child .g-bar{background:var(--marca)}
+.g-axis .g-track{height:18px;background:none;border:0;font:500 12px var(--mono);color:var(--suave)}
+.g-axis span{position:absolute;transform:translateX(-50%)}
+.g-axis span:first-child{transform:none}
+.g-axis span:last-child{transform:translateX(-100%)}
+.g-name{font:500 13px/1.2 var(--mono)}
+
+.contact{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px}
+.contact dl{margin:20px 0 0;display:grid;gap:10px}
+.contact dd{margin:2px 0 0;font:500 17px var(--mono)}
+form{display:grid;gap:12px;min-width:0}
+form label{display:grid;gap:5px;font:500 12px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--suave)}
+form input,form select{width:100%;padding:10px;background:var(--papel);border:1.5px solid var(--linea);border-radius:0;font:400 16px var(--display);color:var(--tinta);letter-spacing:0;text-transform:none}
+.send{justify-self:start;background:var(--marca);color:var(--marca-fg);border:0;padding:13px 20px;font:700 16px/1 var(--display);font-stretch:110%;cursor:pointer}
+#ok{font-size:15px}
+footer{padding-block:6px 28px;font:400 13px/1.5 var(--mono);color:var(--suave)}
+
+@media (max-width:900px){
+  .hero,.contact{grid-template-columns:minmax(0,1fr)}
+  .hero-copy{border-right:0;border-bottom:1.5px solid var(--linea)}
+  .fichas{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ops{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .fichas{grid-template-columns:minmax(0,1fr)}
+  .sheet-body{padding:20px 14px}
+  .hero-copy{padding:24px 14px}
+  .draw{padding:12px}
+  .rotulo{grid-template-columns:minmax(0,1fr)}
+  .rotulo div{border-right:0;border-bottom:1px solid var(--linea)}
+  .rotulo div:last-child{border-bottom:0}
+  .key{grid-template-columns:minmax(0,1fr)}
+  .op{grid-template-columns:84px minmax(0,1fr);gap:12px}
+}
+</style>
+
+<svg width=&quot;0&quot; height=&quot;0&quot; style=&quot;position:absolute&quot; aria-hidden=&quot;true&quot;>
+  <symbol id=&quot;f-tee&quot; viewBox=&quot;0 0 300 340&quot;>
+    <path class=&quot;flat-line&quot; d=&quot;M105 30C120 44 180 44 195 30L250 52L292 120L250 146L232 118V318H68V118L50 146L8 120L50 52Z&quot;/>
+    <path class=&quot;flat-line&quot; d=&quot;M105 30C120 58 180 58 195 30&quot;/><path class=&quot;stitch&quot; d=&quot;M68 308H232M14 113L56 139M286 113L244 139&quot;/>
+  </symbol>
+  <symbol id=&quot;f-over&quot; viewBox=&quot;0 0 300 340&quot;>
+    <path class=&quot;flat-line&quot; d=&quot;M112 34C124 46 176 46 188 34L256 64L296 170L246 184L226 126V318H74V126L54 184L4 170L44 64Z&quot;/>
+    <path class=&quot;flat-line&quot; d=&quot;M112 34C124 56 176 56 188 34&quot;/><path class=&quot;stitch&quot; d=&quot;M74 308H226M9 160L58 174M291 160L242 174&quot;/>
+  </symbol>
+  <symbol id=&quot;f-polo&quot; viewBox=&quot;0 0 300 340&quot;>
+    <path class=&quot;flat-line&quot; d=&quot;M105 30L150 56L195 30L250 52L292 120L250 146L232 118V318H68V118L50 146L8 120L50 52Z&quot;/>
+    <path class=&quot;flat-line&quot; d=&quot;M105 30L126 76L150 56L174 76L195 30M138 62V118H162V62&quot;/><circle class=&quot;flat-line&quot; cx=&quot;150&quot; cy=&quot;84&quot; r=&quot;2&quot;/><circle class=&quot;flat-line&quot; cx=&quot;150&quot; cy=&quot;104&quot; r=&quot;2&quot;/>
+    <path class=&quot;stitch&quot; d=&quot;M68 308H232&quot;/>
+  </symbol>
+  <symbol id=&quot;f-hood&quot; viewBox=&quot;0 0 300 340&quot;>
+    <path class=&quot;flat-line&quot; d=&quot;M100 62L62 78C48 86 40 100 36 120L14 280C13 290 16 296 24 297L54 300C60 300 64 296 65 290L78 170V322H222V170L235 290C236 296 240 300 246 300L276 297C284 296 287 290 286 280L264 120C260 100 252 86 238 78L200 62&quot;/>
+    <path class=&quot;flat-line&quot; d=&quot;M100 66C92 30 118 10 150 10C182 10 208 30 200 66C180 78 120 78 100 66ZM118 64C112 38 128 24 150 24C172 24 188 38 182 64C170 74 130 74 118 64ZM135 74V112M165 74V112M104 226H196L214 288H86Z&quot;/>
+    <path class=&quot;stitch&quot; d=&quot;M78 304H222M16 268L68 272M284 268L232 272&quot;/>
+  </symbol>
+  <symbol id=&quot;f-crew&quot; viewBox=&quot;0 0 300 340&quot;>
+    <path class=&quot;flat-line&quot; d=&quot;M104 42L62 62C48 72 40 88 36 110L14 280C13 290 16 296 24 297L54 300C60 300 64 296 65 290L78 170V322H222V170L235 290C236 296 240 300 246 300L276 297C284 296 287 290 286 280L264 110C260 88 252 72 238 62L196 42C180 56 120 56 104 42Z&quot;/>
+    <path class=&quot;flat-line&quot; d=&quot;M100 44C118 72 182 72 200 44&quot;/><path class=&quot;stitch&quot; d=&quot;M78 304H222M16 268L68 272M284 268L232 272&quot;/>
+  </symbol>
+  <symbol id=&quot;f-zip&quot; viewBox=&quot;0 0 300 340&quot;>
+    <path class=&quot;flat-line&quot; d=&quot;M100 62L62 78C48 86 40 100 36 120L14 280C13 290 16 296 24 297L54 300C60 300 64 296 65 290L78 170V322H222V170L235 290C236 296 240 300 246 300L276 297C284 296 287 290 286 280L264 120C260 100 252 86 238 78L200 62&quot;/>
+    <path class=&quot;flat-line&quot; d=&quot;M100 66C92 30 118 10 150 10C182 10 208 30 200 66C180 78 120 78 100 66ZM118 64C112 38 128 24 150 24C172 24 188 38 182 64C170 74 130 74 118 64ZM150 72V322M100 216L116 276M200 216L184 276&quot;/>
+    <path class=&quot;stitch&quot; d=&quot;M78 304H222M145 76V304M155 76V304&quot;/>
+  </symbol>
+</svg>
+
+<div class=&quot;wrap&quot;>
+  <header class=&quot;top&quot;>
+    <a class=&quot;logo&quot; href=&quot;#hoja-1&quot;>HILVÁN<i>/</i>TALLER</a>
+    <nav aria-label=&quot;Secciones&quot;><a href=&quot;#hoja-2&quot;>Fichas</a><a href=&quot;#hoja-3&quot;>Estampado</a><a href=&quot;#hoja-4&quot;>Trabajos</a><a href=&quot;#hoja-5&quot;>Plazos</a><a href=&quot;#hoja-6&quot;>Cotizar</a></nav>
+  </header>
+
+  <div class=&quot;sheet&quot; id=&quot;hoja-1&quot;>
+    <div class=&quot;sheet-head&quot;><span class=&quot;label&quot;>Hoja 1 de 6</span><span class=&quot;label&quot;>Portfolio de confección</span></div>
+    <div class=&quot;hero&quot;>
+      <div class=&quot;hero-copy&quot;>
+        <div>
+          <h1>Remeras y buzos <span>a medida</span> de tu marca.</h1>
+          <p class=&quot;lead&quot;>Taller textil para empresas, clubes, colegios y marcas propias. Moldería, corte, confección y estampado bajo un mismo techo, desde 30 prendas.</p>
+        </div>
+        <div class=&quot;rotulo&quot;>
+          <div><span class=&quot;label&quot;>Pedido mínimo</span><b>30 prendas</b></div>
+          <div><span class=&quot;label&quot;>Plazo típico</span><b>30 días</b></div>
+          <div><span class=&quot;label&quot;>Talles</span><b>XS a 3XL</b></div>
+        </div>
+      </div>
+      <div class=&quot;draw&quot;>
+        <svg viewBox=&quot;60 60 440 420&quot; role=&quot;img&quot; aria-label=&quot;Plano de una remera con ancho, largo y manga según el talle elegido&quot;>
+          <g id=&quot;talle-g&quot;>
+            <g transform=&quot;translate(110 70)&quot;>
+              <path class=&quot;flat-line&quot; d=&quot;M105 30C120 44 180 44 195 30L250 52L292 120L250 146L232 118V318H68V118L50 146L8 120L50 52Z&quot;/>
+              <path class=&quot;flat-line&quot; d=&quot;M105 30C120 58 180 58 195 30&quot;/>
+              <path class=&quot;stitch&quot; d=&quot;M100 34C118 66 182 66 200 34M68 308H232M14 113L56 139M286 113L244 139&quot;/>
+            </g>
+            <path class=&quot;dim&quot; d=&quot;M178 408H342M178 401V415M342 401V415&quot;/>
+            <text class=&quot;dim-t&quot; x=&quot;260&quot; y=&quot;428&quot; text-anchor=&quot;middle&quot; id=&quot;d-ancho&quot;></text>
+            <path class=&quot;dim&quot; d=&quot;M430 100V388M423 100H437M423 388H437&quot;/>
+            <text class=&quot;dim-t&quot; x=&quot;448&quot; y=&quot;244&quot; text-anchor=&quot;middle&quot; transform=&quot;rotate(90 448 244)&quot; id=&quot;d-largo&quot;></text>
+            <path class=&quot;dim&quot; d=&quot;M108 182L150 214&quot; transform=&quot;translate(-14 14)&quot;/>
+            <text class=&quot;dim-t&quot; x=&quot;66&quot; y=&quot;254&quot; id=&quot;d-manga&quot;></text>
+            <circle class=&quot;pin&quot; cx=&quot;260&quot; cy=&quot;126&quot; r=&quot;10&quot;/><text class=&quot;pin-t&quot; x=&quot;260&quot; y=&quot;130&quot;>A</text>
+            <circle class=&quot;pin&quot; cx=&quot;176&quot; cy=&quot;130&quot; r=&quot;10&quot;/><text class=&quot;pin-t&quot; x=&quot;176&quot; y=&quot;134&quot;>B</text>
+            <circle class=&quot;pin&quot; cx=&quot;260&quot; cy=&quot;378&quot; r=&quot;10&quot;/><text class=&quot;pin-t&quot; x=&quot;260&quot; y=&quot;382&quot;>C</text>
+          </g>
+        </svg>
+        <div class=&quot;sizes&quot; id=&quot;talles&quot; role=&quot;group&quot; aria-label=&quot;Elegir talle&quot;><span class=&quot;label&quot;>Talle</span></div>
+        <ul class=&quot;key&quot;>
+          <li><b>A</b>Cuello en rib 1×1 con lycra</li>
+          <li><b>B</b>Hombro reforzado con cinta</li>
+          <li><b>C</b>Ruedo con collareta a doble aguja</li>
+          <li><b>cm</b><span id=&quot;medidas-txt&quot;></span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class=&quot;sheet&quot; id=&quot;hoja-2&quot;>
+    <div class=&quot;sheet-head&quot;><span class=&quot;label&quot;>Hoja 2 de 6</span><span class=&quot;label&quot;>Fichas de producto</span></div>
+    <div class=&quot;sheet-body&quot;>
+      <h2>Prendas base, listas para tu logo</h2>
+      <div class=&quot;filters&quot; id=&quot;filtros&quot; role=&quot;group&quot; aria-label=&quot;Filtrar fichas&quot;></div>
+      <div class=&quot;fichas&quot; id=&quot;fichas&quot;></div>
+    </div>
+  </div>
+
+  <div class=&quot;sheet&quot; id=&quot;hoja-3&quot;>
+    <div class=&quot;sheet-head&quot;><span class=&quot;label&quot;>Hoja 3 de 6</span><span class=&quot;label&quot;>Técnicas de estampado</span></div>
+    <div class=&quot;sheet-body&quot;>
+      <h2>Qué técnica conviene según el diseño</h2>
+      <div class=&quot;scroll&quot;><table>
+        <thead><tr><th>Técnica</th><th>Sirve para</th><th>Colores</th><th>Mínimo</th><th>Tela</th></tr></thead>
+        <tbody>
+          <tr><td>Serigrafía</td><td>Logos planos y tiradas grandes</td><td>Hasta 6 tintas</td><td>30 u.</td><td>Algodón y mezclas</td></tr>
+          <tr><td>DTF</td><td>Fotos y degradés en tiradas cortas</td><td>Full color</td><td>10 u.</td><td>Casi cualquiera</td></tr>
+          <tr><td>Bordado</td><td>Logos chicos en chombas y buzos</td><td>Hasta 12 hilos</td><td>15 u.</td><td>Piqué, frisa, rústico</td></tr>
+          <tr><td>Sublimación</td><td>Camisetas deportivas con diseño total</td><td>Full color</td><td>20 u.</td><td>Poliéster claro</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div class=&quot;sheet&quot; id=&quot;hoja-4&quot;>
+    <div class=&quot;sheet-head&quot;><span class=&quot;label&quot;>Hoja 4 de 6</span><span class=&quot;label&quot;>Órdenes de producción entregadas</span></div>
+    <div class=&quot;sheet-body&quot;>
+      <h2>Trabajos recientes</h2>
+      <div class=&quot;ops&quot;>
+        <article class=&quot;op&quot;><svg viewBox=&quot;0 0 300 340&quot; aria-hidden=&quot;true&quot;><use href=&quot;#f-tee&quot;/></svg><div><span class=&quot;label&quot;>OP 2614</span><h3>Cervecería Río Seco</h3><p>Uniforme de barra y remeras para vender en sus locales.</p><p class=&quot;res&quot;>420 remeras / 60 buzos. Serigrafía a 3 tintas.</p></div></article>
+        <article class=&quot;op&quot;><svg viewBox=&quot;0 0 300 340&quot; aria-hidden=&quot;true&quot;><use href=&quot;#f-polo&quot;/></svg><div><span class=&quot;label&quot;>OP 2597</span><h3>Logística Austral</h3><p>Uniforme completo para el personal de depósito y reparto.</p><p class=&quot;res&quot;>240 chombas / 120 camperas. Logo bordado.</p></div></article>
+        <article class=&quot;op&quot;><svg viewBox=&quot;0 0 300 340&quot; aria-hidden=&quot;true&quot;><use href=&quot;#f-hood&quot;/></svg><div><span class=&quot;label&quot;>OP 2583</span><h3>Escuela Norte</h3><p>Buzos de egresados para tres cursos, con apodo individual.</p><p class=&quot;res&quot;>96 buzos. Serigrafía y bordado.</p></div></article>
+        <article class=&quot;op&quot;><svg viewBox=&quot;0 0 300 340&quot; aria-hidden=&quot;true&quot;><use href=&quot;#f-over&quot;/></svg><div><span class=&quot;label&quot;>OP 2571</span><h3>Marca Lunes</h3><p>Primera colección de una marca propia, con etiqueta tejida.</p><p class=&quot;res&quot;>300 remeras oversize. DTF y moldería propia.</p></div></article>
+      </div>
+    </div>
+  </div>
+
+  <div class=&quot;sheet&quot; id=&quot;hoja-5&quot;>
+    <div class=&quot;sheet-head&quot;><span class=&quot;label&quot;>Hoja 5 de 6</span><span class=&quot;label&quot;>Plazos</span></div>
+    <div class=&quot;sheet-body&quot;>
+      <h2>Una orden típica, en 30 días corridos</h2>
+      <div class=&quot;scroll&quot;><div class=&quot;gantt&quot; id=&quot;gantt&quot;></div></div>
+    </div>
+  </div>
+
+  <div class=&quot;sheet&quot; id=&quot;hoja-6&quot;>
+    <div class=&quot;sheet-head&quot;><span class=&quot;label&quot;>Hoja 6 de 6</span><span class=&quot;label&quot;>Cotización</span></div>
+    <div class=&quot;sheet-body contact&quot;>
+      <div>
+        <h2>Pedí una cotización</h2>
+        <p>Contanos prenda y cantidad. Te respondemos con precio por unidad y fecha de entrega en un día hábil.</p>
+        <dl>
+          <div><dt class=&quot;label&quot;>Ventas</dt><dd>ventas@hilvan.example</dd></div>
+          <div><dt class=&quot;label&quot;>Teléfono</dt><dd>11 5555-0142</dd></div>
+        </dl>
+      </div>
+      <form id=&quot;form&quot;>
+        <label>Empresa o marca<input id=&quot;c-emp&quot; value=&quot;Marca Lunes&quot;></label>
+        <label>Prenda<select id=&quot;c-pre&quot;></select></label>
+        <label>Cantidad aproximada<input id=&quot;c-cant&quot; inputmode=&quot;numeric&quot; value=&quot;120&quot;></label>
+        <button class=&quot;send&quot; type=&quot;submit&quot;>Pedir cotización</button>
+        <p id=&quot;ok&quot; role=&quot;status&quot; hidden>Este sitio es una muestra, así que el pedido no se envió. En la versión real llegaría a ventas.</p>
+      </form>
+    </div>
+  </div>
+
+  <footer>Sitio de muestra. La marca Hilván, los clientes, las órdenes, las medidas, los plazos y los datos de contacto son ficticios.</footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+
+/* Talles: medidas en cm. El plano escala respecto del talle L. */
+const SIZES={S:[48,68,20],M:[51,70,21],L:[54,72,22],XL:[57,74,23],XXL:[60,76,24]};
+function pick(s){
+  const [a,l,m]=SIZES[s];
+  $('d-ancho').textContent=`ANCHO ${a}`;$('d-largo').textContent=`LARGO ${l}`;$('d-manga').textContent=`MANGA ${m}`;
+  $('medidas-txt').textContent=`Talle ${s}: ancho ${a}, largo ${l}, manga ${m}`;
+  $('talle-g').style.transform=`scale(${(a/54*.5+.5).toFixed(3)})`;
+  $('talles').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.textContent===s));
+}
+Object.keys(SIZES).forEach(s=>{const b=document.createElement('button');b.type='button';b.textContent=s;b.onclick=()=>pick(s);$('talles').append(b)});
+pick('L');
+
+/* Fichas */
+const F=[
+ {c:'RM-01',cat:'Remeras',n:'Remera cuello redondo',f:'f-tee',t:'Jersey 24/1 peinado, 100% algodón',g:'165 g/m²',ta:'S a XXL',m:'30 u.',p:'15 días'},
+ {c:'RM-02',cat:'Remeras',n:'Remera oversize',f:'f-over',t:'Jersey 20/1 peinado, 100% algodón',g:'200 g/m²',ta:'XS a XXL',m:'30 u.',p:'18 días'},
+ {c:'CH-01',cat:'Chombas',n:'Chomba de piqué',f:'f-polo',t:'Piqué 65% algodón, 35% poliéster',g:'220 g/m²',ta:'S a 3XL',m:'30 u.',p:'20 días'},
+ {c:'BZ-01',cat:'Buzos',n:'Buzo canguro',f:'f-hood',t:'Frisa invisible 80% algodón',g:'320 g/m²',ta:'XS a 3XL',m:'15 u.',p:'30 días'},
+ {c:'BZ-02',cat:'Buzos',n:'Buzo cuello redondo',f:'f-crew',t:'Rústico 100% algodón',g:'300 g/m²',ta:'S a 3XL',m:'30 u.',p:'28 días'},
+ {c:'CP-01',cat:'Camperas',n:'Campera con capucha',f:'f-zip',t:'Frisa invisible, cierre metálico',g:'320 g/m²',ta:'S a 3XL',m:'30 u.',p:'32 días'}];
+$('fichas').innerHTML=F.map(x=>`<article class=&quot;ficha&quot; data-cat=&quot;${x.cat}&quot;>
+  <header><h3>${x.n}</h3><span class=&quot;cod&quot;>${x.c}</span></header>
+  <svg viewBox=&quot;0 0 300 340&quot; aria-hidden=&quot;true&quot;><use href=&quot;#${x.f}&quot;/></svg>
+  <dl class=&quot;spec&quot;><dt>Tela</dt><dd>${x.t}</dd><dt>Gramaje</dt><dd>${x.g}</dd><dt>Talles</dt><dd>${x.ta}</dd><dt>Mínimo</dt><dd>${x.m}</dd><dt>Plazo</dt><dd>${x.p}</dd></dl>
+</article>`).join('');
+['Todas','Remeras','Chombas','Buzos','Camperas'].forEach(c=>{
+  const b=document.createElement('button');b.type='button';b.textContent=c;b.setAttribute('aria-pressed',c==='Todas');
+  b.onclick=()=>{
+    [...$('filtros').children].forEach(x=>x.setAttribute('aria-pressed',x===b));
+    document.querySelectorAll('.ficha').forEach(el=>{el.hidden=c!=='Todas'&amp;&amp;el.dataset.cat!==c});
+  };
+  $('filtros').append(b);
+});
+$('c-pre').innerHTML=F.map(x=>`<option>${x.c} ${x.n}</option>`).join('');
+
+/* Gantt: día de inicio y fin, sobre una escala de 30 días. */
+const G=[['Muestra',1,5],['Corte',6,9],['Confección',10,18],['Estampado',19,24],['Control',25,27],['Entrega',28,30]];
+$('gantt').innerHTML=G.map(([n,a,b])=>`<div class=&quot;g-row&quot;><span class=&quot;g-name&quot;>${n}</span><div class=&quot;g-track&quot;><div class=&quot;g-bar&quot; style=&quot;left:${((a-1)/30*100).toFixed(2)}%;width:${((b-a+1)/30*100).toFixed(2)}%&quot; title=&quot;Día ${a} a ${b}&quot;></div></div></div>`).join('')
+ +`<div class=&quot;g-row g-axis&quot;><span class=&quot;g-name&quot;>Día</span><div class=&quot;g-track&quot;><span style=&quot;left:0&quot;>0</span><span style=&quot;left:33.33%&quot;>10</span><span style=&quot;left:66.67%&quot;>20</span><span style=&quot;left:100%&quot;>30</span></div></div>`;
+
+$('form').addEventListener('submit',e=>{e.preventDefault();$('ok').hidden=false});
+</script>
+<script>document.addEventListener(&quot;click&quot;,e=>{const a=e.target.closest('a[href^=&quot;#&quot;]');if(!a)return;e.preventDefault();const t=document.getElementById(a.getAttribute(&quot;href&quot;).slice(1));if(t)t.scrollIntoView()});</script>" hidden></iframe>
+  <iframe id="perchero" title="Portfolio Perchero" srcdoc="<!doctype html><html lang=&quot;es&quot;><head><meta charset=&quot;utf-8&quot;><meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1,viewport-fit=cover&quot;><style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style><title>Hilván Perchero</title>
+<meta name=&quot;claude:viewport-fit-sides&quot; content=&quot;cover&quot;>
+<link rel=&quot;preconnect&quot; href=&quot;https://fonts.googleapis.com&quot;>
+<link rel=&quot;preconnect&quot; href=&quot;https://fonts.gstatic.com&quot; crossorigin>
+<link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=Caprasimo&amp;family=Figtree:wght@400;500;600;700&amp;display=swap&quot;>
+<style>
+/* Layout: un perchero real cruza la página. Cada prenda que se elige tiñe el sitio entero con su color de tela. */
+:root{
+  color-scheme:light;
+  --bg:#BFE3CF;--fg:#0B2A20;--chip:#0B2A20;--chip-fg:#BFE3CF;--rail:#23201C;
+  --display:'Caprasimo','Cooper Black',Georgia,serif;
+  --body:'Figtree','Segoe UI',Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font:400 17px/1.55 var(--body);transition:background-color .45s ease,color .45s ease}
+a{color:inherit}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
+.wrap{max-width:1240px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-block:18px;font-weight:600}
+.top nav{display:flex;gap:20px;flex-wrap:wrap}
+.top nav a{text-decoration:none}
+.top nav a:hover{text-decoration:underline;text-underline-offset:4px}
+.word{font:400 clamp(84px,20.5vw,290px)/.86 var(--display);letter-spacing:-.025em;margin-block:4px 10px}
+.intro{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:26px}
+.intro p{font-size:clamp(20px,2.3vw,28px);line-height:1.25;font-weight:500;max-width:27em;text-wrap:balance}
+.hint{font-size:15px;font-weight:600}
+
+.rack-out{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.rack{position:relative;display:flex;justify-content:center;gap:0;min-width:max-content;padding-inline:max(16px,3vw);padding-top:6px}
+.rack::before{content:&quot;&quot;;position:absolute;left:0;right:0;top:7px;height:10px;background:var(--rail);border-radius:0}
+.item{position:relative;width:clamp(150px,14.6vw,196px);margin-inline:-9px;padding:0;background:none;border:0;cursor:pointer;transform-origin:50% 6px;transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
+.item:nth-child(even){margin-top:3px}
+.item:hover{transform:rotate(-2.5deg)}
+.item:nth-child(even):hover{transform:rotate(2.5deg)}
+.item svg{display:block;width:100%;height:auto;overflow:visible}
+.item[aria-pressed=true]{transform:scale(1.13);z-index:2;transform-origin:50% 0}
+.item span{display:block;text-align:center;font-weight:700;font-size:14px;margin-top:3px;padding-bottom:6px}
+.item[aria-pressed=true] span{text-decoration:underline;text-underline-offset:3px}
+@media (prefers-reduced-motion:reduce){.item,body{transition:none}html{scroll-behavior:auto}}
+
+.detail{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px;padding-block:36px 72px;align-items:start}
+.detail h2{font-size:clamp(46px,7.2vw,104px);line-height:.96;letter-spacing:-.012em}
+.detail .desc{font-size:20px;line-height:1.4;margin-top:16px;max-width:30em}
+.spec{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 20px}
+.spec dt,.spec dd{padding-block:10px;border-top:2px solid var(--fg);margin:0}
+.spec dt{font-weight:700}
+.spec dd{font-variant-numeric:tabular-nums}
+
+.carta{background:#23201C;color:#F7F2E9;padding-block:64px}
+.carta .h{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:end;margin-bottom:28px}
+.carta h2{font-size:clamp(38px,5vw,66px);line-height:1}
+.carta .h p{max-width:26em}
+.swatches{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px}
+.swatch{background:none;border:0;padding:0;text-align:left;color:inherit;cursor:pointer;display:grid;gap:7px}
+.cloth{display:block;aspect-ratio:1;background-color:var(--c);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.09) 0 2px,transparent 2px 4px),repeating-linear-gradient(-45deg,rgba(0,0,0,.09) 0 2px,transparent 2px 4px);border-radius:0 0 26px 0;transition:border-radius .25s ease}
+.swatch:hover .cloth,.swatch[aria-pressed=true] .cloth{border-radius:26px 0 0 0}
+.swatch[aria-pressed=true] .cloth{box-shadow:0 0 0 3px #23201C,0 0 0 6px #F7F2E9}
+.swatch b{display:block;font-weight:700;line-height:1.15}
+.swatch small{font-size:13px;opacity:.78}
+.carta :focus-visible{outline-color:#F7F2E9}
+
+.works{padding-block:72px}
+.works>.wrap>h2{font-size:clamp(38px,5vw,66px);line-height:1;margin-bottom:28px}
+.mosaic{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
+.tile{padding:24px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-content:space-between;min-width:0}
+.tile h3{font-size:clamp(30px,3.5vw,48px);line-height:1}
+.tile p{max-width:34em}
+.tile .fact{font-weight:700;font-size:15px}
+.pile{display:flex;justify-content:center;align-items:flex-end}
+.pile svg{flex:1 1 0;min-width:0;max-width:210px;height:auto;margin-inline:-5%}
+.pile svg:nth-child(1){transform:rotate(-7deg)}
+.pile svg:nth-child(3){transform:rotate(7deg)}
+.pile svg:nth-child(2){z-index:1}
+.t1{grid-column:span 4;background:#1E5A45;color:#F2F7D8}
+.t2{grid-column:span 2;background:#F27BA8;color:#3F0B22}
+.t3{grid-column:span 2;background:#E0A526;color:#2F2000}
+.t4{grid-column:span 4;background:#CDC4FA;color:#1E1650}
+
+.contact{background:var(--chip);color:var(--chip-fg);padding-block:64px;transition:background-color .45s ease,color .45s ease}
+.contact .cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px;align-items:start}
+.contact h2{font-size:clamp(44px,6.6vw,92px);line-height:.98}
+.contact .data{margin-top:22px;display:grid;gap:3px;font-size:19px;font-weight:600}
+form{display:grid;gap:14px;min-width:0}
+form label{display:grid;gap:5px;font-weight:700;font-size:15px}
+form input,form textarea{width:100%;background:transparent;border:0;border-bottom:2px solid currentColor;border-radius:0;padding:7px 0;font-weight:500;font-size:18px}
+form :focus-visible{outline-color:var(--chip-fg)}
+.send{justify-self:start;background:var(--chip-fg);color:var(--chip);border:0;border-radius:40px;padding:13px 26px;font-weight:700;cursor:pointer}
+footer{background:#23201C;color:#F7F2E9;padding-block:20px;font-size:14px}
+
+@media (max-width:900px){
+  .rack{justify-content:flex-start}
+  .item{width:160px}
+  .detail,.contact .cols{grid-template-columns:minmax(0,1fr)}
+  .swatches{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .t1,.t2,.t3,.t4{grid-column:span 3}
+}
+@media (max-width:560px){
+  .swatches{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .mosaic{grid-template-columns:minmax(0,1fr)}
+  .t1,.t2,.t3,.t4{grid-column:auto}
+}
+</style>
+
+<div class=&quot;wrap&quot;>
+  <header class=&quot;top&quot;>
+    <span>Remeras y buzos desde 2009</span>
+    <nav aria-label=&quot;Secciones&quot;><a href=&quot;#carta&quot;>Colores</a><a href=&quot;#trabajos&quot;>Trabajos</a><a href=&quot;#hablemos&quot;>Hablemos</a></nav>
+  </header>
+  <h1 class=&quot;word&quot;>hilván</h1>
+  <div class=&quot;intro&quot;>
+    <p>Hacemos ropa para la gente que quiere usar lo mismo: una promo, un equipo, una empresa, una banda.</p>
+    <span class=&quot;hint&quot;>Elegí una prenda del perchero</span>
+  </div>
+</div>
+
+<div class=&quot;rack-out&quot; tabindex=&quot;0&quot; aria-label=&quot;Perchero de prendas&quot;><div class=&quot;rack&quot; id=&quot;rack&quot; role=&quot;group&quot;></div></div>
+
+<div class=&quot;wrap detail&quot; aria-live=&quot;polite&quot;>
+  <div>
+    <h2 id=&quot;d-name&quot;></h2>
+    <p class=&quot;desc&quot; id=&quot;d-desc&quot;></p>
+  </div>
+  <dl class=&quot;spec&quot; id=&quot;d-spec&quot;></dl>
+</div>
+
+<section class=&quot;carta&quot; id=&quot;carta&quot;>
+  <div class=&quot;wrap&quot;>
+    <div class=&quot;h&quot;>
+      <h2>Carta de color</h2>
+      <p>Tocá un color y mirá cómo queda en la prenda que elegiste. Tela teñida en lote, con muestra física antes de producir.</p>
+    </div>
+    <div class=&quot;swatches&quot; id=&quot;swatches&quot;></div>
+  </div>
+</section>
+
+<section class=&quot;works&quot; id=&quot;trabajos&quot;>
+  <div class=&quot;wrap&quot;>
+    <h2>Quiénes ya la usan</h2>
+    <div class=&quot;mosaic&quot; id=&quot;mosaic&quot;></div>
+  </div>
+</section>
+
+<section class=&quot;contact&quot; id=&quot;hablemos&quot;>
+  <div class=&quot;wrap cols&quot;>
+    <div>
+      <h2>Contanos qué quieren usar.</h2>
+      <div class=&quot;data&quot;><span>hola@hilvan.example</span><span>11 5555-0142</span><span>Lunes a viernes, de 9 a 18</span></div>
+    </div>
+    <form id=&quot;form&quot;>
+      <label>Tu nombre<input id=&quot;f-n&quot; value=&quot;Cami&quot;></label>
+      <label>Qué necesitan<textarea id=&quot;f-t&quot; rows=&quot;3&quot;>40 buzos pino para el equipo de hockey, con escudo bordado.</textarea></label>
+      <button class=&quot;send&quot; type=&quot;submit&quot;>Enviar</button>
+      <p id=&quot;ok&quot; role=&quot;status&quot; hidden>Este sitio es una muestra, así que el mensaje no se envió.</p>
+    </form>
+  </div>
+</section>
+
+<footer><div class=&quot;wrap&quot;>Sitio de muestra. La marca Hilván, sus clientes, sus trabajos y sus datos de contacto son ficticios.</div></footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const E='#23201C';
+const G={
+ tee:(c)=>`<path d=&quot;M105 30C120 44 180 44 195 30L250 52L292 120L250 146L232 118V318H68V118L50 146L8 120L50 52Z&quot; fill=&quot;${c}&quot; stroke=&quot;${E}&quot; stroke-width=&quot;2&quot;/><path d=&quot;M105 30C120 58 180 58 195 30C180 44 120 44 105 30Z&quot; fill=&quot;#000&quot; fill-opacity=&quot;.28&quot;/><path d=&quot;M68 118C82 138 82 200 76 240M232 118C218 138 218 200 224 240&quot; stroke=&quot;#000&quot; stroke-opacity=&quot;.14&quot; stroke-width=&quot;3&quot; fill=&quot;none&quot;/>`,
+ over:(c)=>`<path d=&quot;M112 34C124 46 176 46 188 34L256 64L296 170L246 184L226 126V318H74V126L54 184L4 170L44 64Z&quot; fill=&quot;${c}&quot; stroke=&quot;${E}&quot; stroke-width=&quot;2&quot;/><path d=&quot;M112 34C124 56 176 56 188 34C176 46 124 46 112 34Z&quot; fill=&quot;#000&quot; fill-opacity=&quot;.28&quot;/>`,
+ polo:(c)=>`<path d=&quot;M105 30L150 56L195 30L250 52L292 120L250 146L232 118V318H68V118L50 146L8 120L50 52Z&quot; fill=&quot;${c}&quot; stroke=&quot;${E}&quot; stroke-width=&quot;2&quot;/><path d=&quot;M105 30L126 76L150 56L174 76L195 30L150 44Z&quot; fill=&quot;#fff&quot; fill-opacity=&quot;.55&quot; stroke=&quot;${E}&quot; stroke-width=&quot;1.5&quot;/><path d=&quot;M142 60V116H158V60&quot; fill=&quot;#000&quot; fill-opacity=&quot;.14&quot;/><circle cx=&quot;150&quot; cy=&quot;82&quot; r=&quot;2.4&quot; fill=&quot;${E}&quot;/><circle cx=&quot;150&quot; cy=&quot;102&quot; r=&quot;2.4&quot; fill=&quot;${E}&quot;/>`,
+ hood:(c)=>`<path d=&quot;M100 62L62 78C48 86 40 100 36 120L14 280C13 290 16 296 24 297L54 300C60 300 64 296 65 290L78 170V322H222V170L235 290C236 296 240 300 246 300L276 297C284 296 287 290 286 280L264 120C260 100 252 86 238 78L200 62Z&quot; fill=&quot;${c}&quot; stroke=&quot;${E}&quot; stroke-width=&quot;2&quot;/><path d=&quot;M78 304H222V322H78ZM16 268L68 272L65 290C64 296 60 300 54 300L24 297C16 296 13 290 14 280ZM284 268L232 272L235 290C236 296 240 300 246 300L276 297C284 296 287 290 286 280ZM104 226H196L214 288H86Z&quot; fill=&quot;#000&quot; fill-opacity=&quot;.14&quot;/><path d=&quot;M100 66C92 30 118 10 150 10C182 10 208 30 200 66C180 78 120 78 100 66Z&quot; fill=&quot;${c}&quot; stroke=&quot;${E}&quot; stroke-width=&quot;2&quot;/><path d=&quot;M118 64C112 38 128 24 150 24C172 24 188 38 182 64C170 74 130 74 118 64Z&quot; fill=&quot;#000&quot; fill-opacity=&quot;.38&quot;/><path d=&quot;M135 74V112M165 74V112&quot; stroke=&quot;#fff&quot; stroke-width=&quot;2.5&quot; fill=&quot;none&quot;/>`,
+ zip:(c)=>`<path d=&quot;M100 62L62 78C48 86 40 100 36 120L14 280C13 290 16 296 24 297L54 300C60 300 64 296 65 290L78 170V322H222V170L235 290C236 296 240 300 246 300L276 297C284 296 287 290 286 280L264 120C260 100 252 86 238 78L200 62Z&quot; fill=&quot;${c}&quot; stroke=&quot;${E}&quot; stroke-width=&quot;2&quot;/><path d=&quot;M78 304H222V322H78ZM16 268L68 272L65 290C64 296 60 300 54 300L24 297C16 296 13 290 14 280ZM284 268L232 272L235 290C236 296 240 300 246 300L276 297C284 296 287 290 286 280Z&quot; fill=&quot;#000&quot; fill-opacity=&quot;.14&quot;/><path d=&quot;M100 66C92 30 118 10 150 10C182 10 208 30 200 66C180 78 120 78 100 66Z&quot; fill=&quot;${c}&quot; stroke=&quot;${E}&quot; stroke-width=&quot;2&quot;/><path d=&quot;M118 64C112 38 128 24 150 24C172 24 188 38 182 64C170 74 130 74 118 64Z&quot; fill=&quot;#000&quot; fill-opacity=&quot;.38&quot;/><path d=&quot;M150 72V322M100 216L116 276M200 216L184 276&quot; stroke=&quot;${E}&quot; stroke-width=&quot;2.5&quot; fill=&quot;none&quot;/>`
+};
+const hanger=`<path d=&quot;M150 4C136 4 136 24 150 26V48&quot; fill=&quot;none&quot; stroke=&quot;${E}&quot; stroke-width=&quot;4&quot; stroke-linecap=&quot;round&quot;/><path d=&quot;M150 48L68 92H232Z&quot; fill=&quot;none&quot; stroke=&quot;${E}&quot; stroke-width=&quot;4&quot; stroke-linejoin=&quot;round&quot;/>`;
+const hung=(type,c)=>`<svg viewBox=&quot;0 0 300 400&quot; aria-hidden=&quot;true&quot;>${hanger}<g transform=&quot;translate(0 56)&quot;>${G[type](c)}</g></svg>`;
+const flat=(type,c)=>`<svg viewBox=&quot;0 0 300 340&quot; aria-hidden=&quot;true&quot;>${G[type](c)}</svg>`;
+
+/* Cada prenda trae el color con el que se tiñe la página. */
+const ITEMS=[
+ {type:'tee',short:'Clásica',name:'Remera clásica',c:'#E2472F',bg:'#FBC9BC',fg:'#3A0F0A',desc:'La remera de siempre, con buen cuello y caída limpia. Soporta bien la serigrafía y los lavados.',tela:'Jersey 24/1 peinado',gr:'165 g/m²',ta:'S a XXL',min:'30 unidades'},
+ {type:'hood',short:'Canguro',name:'Buzo canguro',c:'#1E5A45',bg:'#BFE3CF',fg:'#0B2A20',desc:'Nuestro buzo más pedido para egresados y equipos. Abriga sin pesar y aguanta años de uso.',tela:'Frisa invisible',gr:'320 g/m²',ta:'XS a 3XL',min:'15 unidades'},
+ {type:'over',short:'Oversize',name:'Remera oversize',c:'#F27BA8',bg:'#FFD6E4',fg:'#4B0F2A',desc:'Hombro caído y tela con cuerpo. La favorita de las marcas propias y de las bandas.',tela:'Jersey 20/1 peinado',gr:'200 g/m²',ta:'XS a XXL',min:'30 unidades'},
+ {type:'zip',short:'Campera',name:'Campera con capucha',c:'#3E8EDE',bg:'#CDE7FF',fg:'#0B2A4A',desc:'Cierre metálico y bolsillos internos. Queda muy bien con logo bordado en el pecho.',tela:'Frisa invisible',gr:'320 g/m²',ta:'S a 3XL',min:'30 unidades'},
+ {type:'polo',short:'Chomba',name:'Chomba de piqué',c:'#2A3068',bg:'#D5D7EC',fg:'#12152F',desc:'Prolija para el mostrador y cómoda para todo el día. Pensada para uniformes de empresa.',tela:'Piqué algodón y poliéster',gr:'220 g/m²',ta:'S a 3XL',min:'30 unidades'},
+ {type:'hood',short:'Lavanda',name:'Buzo lavanda',c:'#9C8BE0',bg:'#E6E0FF',fg:'#241A5C',desc:'El mismo canguro en una tirada de color de temporada, para promos que quieren otra cosa.',tela:'Frisa invisible',gr:'320 g/m²',ta:'XS a 3XL',min:'15 unidades'},
+ {type:'tee',short:'Mostaza',name:'Remera mostaza',c:'#E0A526',bg:'#FFEBAF',fg:'#3D2A00',desc:'Algodón peinado teñido en mostaza. Pide estampas oscuras y funciona bien en eventos.',tela:'Jersey 24/1 peinado',gr:'165 g/m²',ta:'S a XXL',min:'30 unidades'}
+];
+const COLORS=[['Tomate','#E2472F'],['Pino','#1E5A45'],['Chicle','#F27BA8'],['Cielo','#3E8EDE'],['Noche','#2A3068'],['Lavanda','#9C8BE0'],['Mostaza','#E0A526'],['Crudo','#EFE5CF'],['Bordó','#6E1230'],['Melange','#A9ABB0'],['Oliva','#6F7338'],['Tiza','#FAFAF6']];
+let sel=1;
+
+function drawRack(){
+  $('rack').innerHTML=ITEMS.map((it,i)=>`<button type=&quot;button&quot; class=&quot;item&quot; data-i=&quot;${i}&quot; aria-pressed=&quot;${i===sel}&quot;>${hung(it.type,it.c)}<span>${it.short}</span></button>`).join('');
+}
+function detail(){
+  const it=ITEMS[sel],root=document.documentElement.style;
+  root.setProperty('--bg',it.bg);root.setProperty('--fg',it.fg);root.setProperty('--chip',it.fg);root.setProperty('--chip-fg',it.bg);
+  $('d-name').textContent=it.name;$('d-desc').textContent=it.desc;
+  const col=(COLORS.find(c=>c[1]===it.c)||[''])[0];
+  $('d-spec').innerHTML=[['Tela',it.tela],['Gramaje',it.gr],['Talles',it.ta],['Mínimo',it.min],['Color',col]].map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
+  document.querySelectorAll('.swatch').forEach(s=>s.setAttribute('aria-pressed',s.dataset.c===it.c));
+}
+$('rack').addEventListener('click',e=>{
+  const b=e.target.closest('.item');if(!b)return;
+  sel=+b.dataset.i;
+  document.querySelectorAll('.item').forEach((x,i)=>x.setAttribute('aria-pressed',i===sel));
+  detail();
+});
+$('swatches').innerHTML=COLORS.map(([n,c],i)=>`<button type=&quot;button&quot; class=&quot;swatch&quot; data-c=&quot;${c}&quot;><span class=&quot;cloth&quot; style=&quot;--c:${c}&quot;></span><span><b>${n}</b><small>HV-${String(i+1).padStart(3,'0')}</small></span></button>`).join('');
+$('swatches').addEventListener('click',e=>{
+  const b=e.target.closest('.swatch');if(!b)return;
+  ITEMS[sel].c=b.dataset.c;drawRack();detail();
+});
+
+$('mosaic').innerHTML=[
+ {k:'t1',t:'Egresados',p:'La Promo 26 de Escuela Norte eligió el canguro en tres colores, uno por curso, con el apodo de cada uno bordado en la espalda.',f:'96 buzos, 3 colores de tela',a:[['hood','#F2F7D8'],['hood','#9C8BE0'],['hood','#E0A526']]},
+ {k:'t2',t:'Equipos',p:'Hockey Las Tunas viaja con la misma campera desde hace tres temporadas.',f:'60 camperas con escudo',a:[['zip','#FAFAF6']]},
+ {k:'t3',t:'Bandas',p:'Las remeras de gira de Los Veranos se agotaron en dos fechas.',f:'200 remeras oversize',a:[['over','#2A3068']]},
+ {k:'t4',t:'Empresas',p:'Cervecería Río Seco viste a su barra y además vende nuestras remeras en sus locales.',f:'420 remeras, 60 buzos, 3 colores',a:[['tee','#E2472F'],['hood','#2A3068'],['polo','#FAFAF6']]}
+].map(x=>`<article class=&quot;tile ${x.k}&quot;><div class=&quot;pile&quot;>${x.a.map(g=>flat(g[0],g[1])).join('')}</div><div><h3>${x.t}</h3><p>${x.p}</p><p class=&quot;fact&quot;>${x.f}</p></div></article>`).join('');
+
+$('form').addEventListener('submit',e=>{e.preventDefault();$('ok').hidden=false});
+drawRack();detail();
+</script>
+<script>document.addEventListener(&quot;click&quot;,e=>{const a=e.target.closest('a[href^=&quot;#&quot;]');if(!a)return;e.preventDefault();const t=document.getElementById(a.getAttribute(&quot;href&quot;).slice(1));if(t)t.scrollIntoView()});</script>" hidden></iframe>
+
+  <section id="calculadora" hidden>
+    <div class="calc-in">
+      <h1>Calculá tu presupuesto</h1>
+      <p class="intro">Elegí prenda, cantidad y estampado para ver un precio estimado al instante.</p>
+      <div class="cols">
+        <form id="calc">
+          <div class="campo"><label for="c-prenda">Prenda</label><select id="c-prenda"></select></div>
+          <div class="dos">
+            <div class="campo"><label for="c-cant">Cantidad</label><input id="c-cant" type="number" min="1" step="1" inputmode="numeric" value="40"></div>
+            <div class="campo"><label for="c-ubic">Lugares estampados</label>
+              <select id="c-ubic"><option value="1">1 (frente o espalda)</option><option value="2">2 (frente y espalda)</option></select>
+            </div>
+          </div>
+          <div class="campo"><label for="c-tec">Estampado</label><select id="c-tec"></select></div>
+          <label class="check"><input id="c-apodo" type="checkbox"><span>Agregar nombre o apodo individual a cada prenda</span></label>
+          <p class="aviso" id="aviso" role="status" hidden></p>
+          <p class="aviso" id="escala"></p>
+        </form>
+
+        <aside class="ticket" aria-live="polite">
+          <h2>Presupuesto estimado</h2>
+          <p class="detalle" id="t-detalle"></p>
+          <dl id="t-lineas"></dl>
+          <div class="total"><span>Total</span><b id="t-total"></b></div>
+          <div class="sub"><span>Por prenda</span><span id="t-unidad"></span></div>
+          <div class="sub"><span>Seña (50%)</span><span id="t-sena"></span></div>
+          <p class="legal">Precios en pesos argentinos, de ejemplo. No constituyen una cotización.</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* PRECIOS DE EJEMPLO: cambiá estos valores por los reales. Todos están en pesos, por unidad. */
+const PRECIOS={
+  prendas:[
+    {id:'remera',  nombre:'Remera cuello redondo',precio:14000,minimo:30},
+    {id:'oversize',nombre:'Remera oversize',      precio:18000,minimo:30},
+    {id:'chomba',  nombre:'Chomba de piqué',      precio:22000,minimo:30},
+    {id:'canguro', nombre:'Buzo canguro',         precio:42000,minimo:15},
+    {id:'redondo', nombre:'Buzo cuello redondo',  precio:36000,minimo:30},
+    {id:'campera', nombre:'Campera con capucha',  precio:52000,minimo:30}
+  ],
+  estampados:[
+    {id:'ninguno',   nombre:'Sin estampado',precio:0,   minimo:0},
+    {id:'serigrafia',nombre:'Serigrafía',   precio:3500,minimo:30},
+    {id:'dtf',       nombre:'DTF',          precio:5000,minimo:10},
+    {id:'bordado',   nombre:'Bordado',      precio:4500,minimo:15}
+  ],
+  apodo:2500,
+  descuentos:[{desde:300,pct:15},{desde:100,pct:10},{desde:50,pct:5}],
+  sena:.5
+};
+
+/* Calcula el presupuesto. No toca la página, así se puede probar por separado. */
+function calcular({prenda,estampado,cantidad,lugares,apodo},P=PRECIOS){
+  const pr=P.prendas.find(x=>x.id===prenda),es=P.estampados.find(x=>x.id===estampado);
+  const lug=es.precio?lugares:0;
+  const unitario=pr.precio+es.precio*lug+(apodo?P.apodo:0);
+  const bruto=unitario*cantidad;
+  const pct=(P.descuentos.find(d=>cantidad>=d.desde)||{pct:0}).pct;
+  const descuento=Math.round(bruto*pct/100);
+  const total=bruto-descuento;
+  return {pr,es,lug,bruto,pct,descuento,total,
+    porPrenda:cantidad?Math.round(total/cantidad):0,sena:Math.round(total*P.sena),
+    minimo:Math.max(pr.minimo,es.minimo)};
+}
+
+const $=id=>document.getElementById(id);
+const pesos=n=>'$'+Math.round(n).toLocaleString('es-AR');
+$('c-prenda').innerHTML=PRECIOS.prendas.map(x=>`<option value="${x.id}">${x.nombre}</option>`).join('');
+$('c-tec').innerHTML=PRECIOS.estampados.map(x=>`<option value="${x.id}">${x.nombre}</option>`).join('');
+$('c-prenda').value='canguro';$('c-tec').value='bordado';
+
+function actualizar(){
+  const crudo=Number($('c-cant').value);
+  const valida=Number.isInteger(crudo)&&crudo>0;
+  const cantidad=valida?crudo:0;
+  const estampado=$('c-tec').value;
+  $('c-ubic').disabled=estampado==='ninguno';
+  const r=calcular({prenda:$('c-prenda').value,estampado,cantidad,lugares:+$('c-ubic').value,apodo:$('c-apodo').checked});
+
+  $('t-detalle').textContent=`${cantidad} × ${r.pr.nombre}. ${r.es.nombre}.`;
+  const filas=[[`Prenda, ${pesos(r.pr.precio)} c/u`,r.pr.precio*cantidad]];
+  if(r.lug)filas.push([`${r.es.nombre}, ${r.lug} ${r.lug>1?'lugares':'lugar'}`,r.es.precio*r.lug*cantidad]);
+  if($('c-apodo').checked)filas.push([`Apodos, ${pesos(PRECIOS.apodo)} c/u`,PRECIOS.apodo*cantidad]);
+  if(r.descuento)filas.push([`Descuento por cantidad, ${r.pct}%`,-r.descuento]);
+  $('t-lineas').innerHTML=filas.map(([k,v])=>`<dt>${k}</dt><dd>${v<0?'−'+pesos(-v):pesos(v)}</dd>`).join('');
+  $('t-total').textContent=pesos(r.total);
+  $('t-unidad').textContent=pesos(r.porPrenda);
+  $('t-sena').textContent=pesos(r.sena);
+
+  const aviso=$('aviso');
+  if(!valida){aviso.textContent='Ingresá una cantidad entera mayor que cero.';aviso.hidden=false}
+  else if(cantidad<r.minimo){aviso.textContent=`El pedido mínimo para esta combinación es de ${r.minimo} prendas.`;aviso.hidden=false}
+  else aviso.hidden=true;
+
+  const prox=[...PRECIOS.descuentos].reverse().find(d=>cantidad<d.desde);
+  $('escala').textContent=valida&&prox?`Con ${prox.desde-cantidad} prendas más llegás al ${prox.pct}% de descuento.`:'';
+}
+$('calc').addEventListener('input',actualizar);
+$('calc').addEventListener('submit',e=>e.preventDefault());
+actualizar();
+
+/* Pestañas */
+const VISTAS=['promo','ficha','perchero','calculadora'];
+function mostrar(v){
+  VISTAS.forEach(x=>{$(x).hidden=x!==v});
+  $('tabs').querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));
+  try{history.replaceState(null,'','#'+v)}catch(e){}
+}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)mostrar(b.dataset.v)});
+if(VISTAS.includes(location.hash.slice(1)))mostrar(location.hash.slice(1));
+</script>
+</body>
+</html>
