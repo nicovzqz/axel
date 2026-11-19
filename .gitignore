@@ -1,0 +1,8 @@
+# Material de trabajo que no se publica.
+# La lista de Excel tiene costos internos: nunca subirla.
+*.xlsx
+uniformes_m.html
+*_files/
+WhatsApp Image*
+.claude/
+__pycache__/
