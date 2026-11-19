@@ -167,16 +167,21 @@
           <h3>Tu presupuesto</h3>
           <p class="cart-school" id="cart-school"></p>
           <p class="cart-empty" id="cart-empty">Todavía no agregaste prendas.</p>
-          <ul class="lines" id="lines"></ul>
           <div class="totals" id="totals" hidden>
             <div class="total-row"><span>Precio de lista</span><b id="t-lista"></b></div>
             <div class="total-row main"><span>Efectivo o transferencia<small id="t-ef-save"></small></span><b id="t-ef"></b></div>
             <div class="total-row"><span>En 3 pagos<small id="t-3p-save"></small></span><b id="t-3p"></b></div>
           </div>
+          <div class="cart-pdf" id="cart-pdf" hidden>
+            <label>A nombre de (opcional)<input id="b-name" maxlength="60" autocomplete="name" placeholder="Para el PDF"></label>
+          </div>
           <div class="actions" id="cart-actions" hidden>
             <button class="button" type="button" id="b-send">Enviar por WhatsApp</button>
+            <button class="button" type="button" id="b-pdf">Descargar PDF</button>
             <button class="button light" type="button" id="b-clear">Vaciar</button>
           </div>
+          <p class="status" id="pdf-status" role="status"></p>
+          <ul class="lines" id="lines" aria-label="Prendas del presupuesto"></ul>
           <p class="fine" id="fine"></p>
         </aside>
       </div>
@@ -252,6 +257,7 @@
 
 <script src="precios.js"></script>
 <script src="assets/app.js"></script>
+<script src="assets/pdf.js"></script>
 <script src="assets/bot.js"></script>
 </body>
 </html>

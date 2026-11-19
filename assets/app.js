@@ -102,7 +102,7 @@ function renderSchools() {
 }
 
 /* ---------- Catálogo ---------- */
-const state = {school: '', items: []};
+const state = {school: '', items: [], nombre: ''};
 
 function lineaTag(p) {
   if (p.linea === 'Clásica') return '<span class="tag clasica">Clásica</span>';
@@ -198,7 +198,8 @@ function renderCart() {
   state.items = items;
   $('cart-school').textContent = state.school ? SCHOOLS[state.school] : '';
   $('cart-empty').hidden = items.length > 0;
-  $('totals').hidden = $('cart-actions').hidden = !items.length;
+  $('totals').hidden = $('cart-actions').hidden = $('cart-pdf').hidden = !items.length;
+  if (!items.length) $('pdf-status').textContent = '';
   $('lines').innerHTML = items.map((it, i) => {
     const p = PRODUCTS[it.id];
     const t = p.talles[it.ti];
@@ -242,6 +243,7 @@ $('lines').addEventListener('click', e => {
   renderCart();
 });
 $('b-clear').onclick = () => { state.items = []; renderCart(); };
+$('b-name').addEventListener('input', e => { state.nombre = e.target.value.trim(); save(); });
 
 function setSchool(id) {
   if (id === state.school) return;
@@ -284,6 +286,7 @@ function restore() {
       $('b-note').hidden = true;
       state.items = (s.items || []).filter(it => PRODUCTS[it.id] && PRODUCTS[it.id].talles[it.ti]);
     }
+    if (s && typeof s.nombre === 'string') state.nombre = $('b-name').value = s.nombre;
   } catch (e) { /* datos viejos o bloqueados */ }
 }
 
