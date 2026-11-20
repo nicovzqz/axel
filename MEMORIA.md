@@ -60,8 +60,9 @@ Clientes: Supabase → proyecto `uniformes-m` → **Table Editor → `leads`** (
 - **6 pagos = precio de lista** (supuesto, el Excel lo sugiere). Se cambia en `SEIS_PAGOS` (`assets/comercial.js`).
 - **Seguridad de datos**: en Supabase la tabla `leads` tiene RLS y sin permisos para los roles públicos;
   además la Data API del proyecto está desactivada. La API solo acepta datos de `uniformesm.onrender.com`.
-- **WhatsApp**: se recomendó la API oficial de Meta (gratuita para responder mensajes de clientes) en
-  lugar de automatizar WhatsApp Web (riesgo de bloqueo del número). **Decisión pendiente.**
+- **WhatsApp**: API oficial de Meta (gratuita para responder mensajes de clientes) en lugar de automatizar
+  WhatsApp Web (riesgo de bloqueo). Meta ahora separa "cuenta de WhatsApp" (el número) y "cuenta de mensajes"
+  (plantillas y pagos): el bot necesita acceso a las dos y la cuenta de mensajes suscripta a la app.
 
 ## Archivos clave
 
@@ -72,6 +73,7 @@ Clientes: Supabase → proyecto `uniformes-m` → **Table Editor → `leads`** (
 | `assets/comercial.js` | **Promociones**, formas de pago, WhatsApp y datos del local (web y bot de WhatsApp). |
 | `server/src/whatsapp/` | Bot de WhatsApp: `flujo.js` (conversación), `meta.js` (API de Meta), `datos.js`. |
 | `assets/bot.js` | Chat: menú, flujo de presupuesto, preguntas por colegio, límite de intentos, envío a la API. |
+| `privacidad.html` | Política de privacidad (la exige Meta para publicar la app). |
 | `assets/pdf.js` | PDF del presupuesto (jsPDF desde cdnjs). |
 | `assets/config.js` | Dirección de la API para el sitio publicado. |
 | `lista_web.csv` | **Planilla de precios que mantiene Axel** (se abre con Excel). |
@@ -109,9 +111,13 @@ motor PostgreSQL, servidor `db`; claves en `.env`, que no se sube).
 - [ ] Axel completa la columna **Nivel** en `lista_web.csv` (hoy 53 de 278 filas la tienen).
 - [ ] Confirmar condición de **6 pagos** y el link del **canal** (hoy apunta a Instagram).
 - [ ] Revisar el talle repetido de "Pantalón grueso" (IJH) en la planilla original.
-- [ ] **Bot de WhatsApp** (API oficial, en `server/src/whatsapp/`): código listo y probado en local.
-      Falta crear la app en Meta y cargar sus claves en Render (ver DESPLIEGUE.md, sección 5).
-      Prueba con el número de prueba de Meta y el celular personal de Nico como destinatario.
+- [x] **Bot de WhatsApp funcionando** (20/11/2026) con el número de prueba de Meta (+1 555-155-5704) y el celular
+      de Nico como destinatario. App de Meta "Uniformes M Bot" (publicada), portfolio "Uniformes M" (sin verificar),
+      usuario del sistema "Uniformes M Bot" con token sin vencimiento. Paso a paso en DESPLIEGUE.md, sección 5.
+- [ ] **Cambiar el token de WhatsApp y el App Secret** (se compartieron en el chat): revocar/generar token en
+      Usuarios del sistema y restablecer la clave en Configuración → Básica; actualizar Render.
+- [ ] Pasar el bot a los números reales del local: agregar el número en WhatsApp Manager, verificar la empresa,
+      cargar forma de pago (solo para mensajes que inicia la empresa) y cambiar `WHATSAPP_PHONE_NUMBER_ID`.
 - [ ] Opcional: dominio propio (Render → `uniformesm` → Custom Domains) y sumarlo a `ALLOWED_ORIGINS`.
 - [ ] Opcional: texto de privacidad en el sitio (se guardan nombre y teléfono).
 

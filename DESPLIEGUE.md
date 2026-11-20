@@ -52,16 +52,27 @@ El sitio local (`http://localhost:5173`) usa la API local automáticamente.
 ## 5. Bot de WhatsApp (API oficial de Meta)
 El bot vive en la misma API (`/api/whatsapp/webhook`) y usa los mismos precios, promos y base que la web.
 
-**Etapa de prueba** (número de prueba gratuito de Meta; tu celular como destinatario autorizado):
-1. <https://developers.facebook.com> → **My Apps → Create App** → tipo **Business** → agregar el producto **WhatsApp**.
-2. **WhatsApp → API Setup**: anotar el **Phone number ID** del número de prueba y generar el **token temporal**
-   (dura 24 h). En **To**, agregar tu celular (+54 9 11 …) y confirmar el código que llega por WhatsApp.
-3. **App settings → Basic → App secret**: copiarlo.
-4. Render → `uniformes-m-api` → **Environment**: cargar `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`
-   y `WHATSAPP_APP_SECRET`, y guardar (se vuelve a desplegar).
-5. **WhatsApp → Configuration → Webhook**: Callback URL `https://uniformes-m-api.onrender.com/api/whatsapp/webhook`,
-   Verify token = el valor de `WHATSAPP_VERIFY_TOKEN` en Render. Después, en **Webhook fields**, suscribir `messages`.
-6. Desde tu celular, escribirle "hola" al número de prueba.
+**Etapa de prueba** (número de prueba gratuito de Meta; tu celular como destinatario autorizado). Ya está hecho
+para la app "Uniformes M Bot" (portfolio "Uniformes M"); esto sirve para repetirlo con otra app o número:
+1. <https://developers.facebook.com> → **Crear app** → caso de uso "Conectarte con los clientes a través de WhatsApp"
+   → portfolio comercial (se puede crear ahí mismo, sin verificar).
+2. **Paso 1. Pruébalo**: anotar el **Phone number ID** y agregar tu celular como destinatario (código por WhatsApp).
+   Meta lo guarda como `54 11 15…`; el bot ya prueba ese formato solo si Meta rechaza el `549…` (error 131030).
+3. **Configuración de la app → Básica**: URL de privacidad `https://uniformesm.onrender.com/privacidad.html`,
+   categoría, guardar, y **Publicar** la app. Sin publicar, Meta **no entrega** mensajes reales al webhook.
+4. **Token permanente**: business.facebook.com → Configuración → **Usuarios del sistema** → crear uno (Employee) →
+   Asignar activos: la app, la **cuenta de WhatsApp** (Mensajes + Números de teléfono ver y administrar) y la
+   **cuenta de mensajes** ("Messaging accounts", acceso total). Generar token sin vencimiento con
+   `whatsapp_business_messaging` y `whatsapp_business_management`.
+5. **App secret**: Configuración de la app → Básica → Clave secreta.
+6. Render → `uniformes-m-api` → **Environment**: `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_APP_SECRET`.
+7. **Paso 2 → Webhooks**: Callback `https://uniformes-m-api.onrender.com/api/whatsapp/webhook`,
+   Verify token = `WHATSAPP_VERIFY_TOKEN` de Render (se suscribe solo a `messages`).
+8. **Activar el número de prueba**: en Paso 1 tocar "Generar token" y "Enviar mensaje" a tu celular (pasa de
+   PENDING a CONNECTED y el chat aparece en tu WhatsApp; antes WhatsApp dice que el número no existe).
+9. **Suscribir la cuenta de mensajes a la app** (si no, los mensajes no llegan al webhook):
+   `POST https://graph.facebook.com/v25.0/<ID cuenta de mensajes>/subscribed_apps` con el token.
+10. Responder "hola" en ese chat.
 
 **Para producción**: token permanente (Business Settings → System users), número real del local
 verificado en Meta y verificación de la empresa. En local, el bot responde en el registro
