@@ -11,6 +11,12 @@ const PROMOS = {
 };
 /* Descuento habitual cuando no hay promo vigente (columna EFC de la lista). */
 const SIN_PROMO = {efectivo: 20, tresPagos: 0};
+/* 6 pagos: por ahora precio de lista (0% de descuento). Confirmar con Axel. */
+const SEIS_PAGOS = {descuento: 0};
+
+/* Armador de presupuesto en la página: oculto por ahora (pedido de Axel), el presupuesto
+   se pide por el asistente, que termina en WhatsApp. Poné true para volver a mostrarlo. */
+const MOSTRAR_ARMADOR = false;
 
 const WHATSAPP = ['541128963629', '541123477515'];
 /* Orden y nombres tal como aparecen en el diseño. */
@@ -19,7 +25,7 @@ const CATEGORY_ORDER = ['Pantalones y equipos', 'Buzos, camperas y abrigo', 'Rem
   'Polleras, shorts y bermudas', 'Delantales', 'Accesorios'];
 
 const $ = id => document.getElementById(id);
-const normal = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const normal = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const pesos = n => '$' + Math.round(n).toLocaleString('es-AR');
 const LISTA = window.LISTA;
 const SCHOOLS = LISTA.colegios;
@@ -303,9 +309,12 @@ $('school-contact').onclick = () => {
   $('interest').value = 'Uniforme para mi familia';
   $('school-dialog').close();
 };
-$('school-budget').onclick = () => {
-  setSchool($('school-dialog').dataset.school);
+$('school-budget').onclick = e => {
+  const id = $('school-dialog').dataset.school;
   $('school-dialog').close();
+  if (MOSTRAR_ARMADOR) { setSchool(id); return; }
+  e.preventDefault();
+  window.abrirAsistente('presupuesto', {colegio: id});
 };
 
 function openMessage(title, text) {
@@ -372,7 +381,8 @@ if ('IntersectionObserver' in window && !calm) {
 renderPromoBar();
 renderSchools();
 $('search').addEventListener('input', renderSchools);
-restore();
+$('presupuesto').hidden = !MOSTRAR_ARMADOR;
+if (MOSTRAR_ARMADOR) restore();
 renderCatalog();
 refreshPrices();
 renderCart();

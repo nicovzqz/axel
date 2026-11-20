@@ -103,19 +103,26 @@ async function buildBudgetPDF(now = new Date()) {
 
   /* ----- Cliente ----- */
   let y = 58;
+  /* Nivel y año (los carga el chat): columna propia a la derecha. */
+  const nivel = state.detalle || '';
+  const colW = nivel ? 72 : R - M - 80;
+  const colegio = doc.setFontSize(10.5).splitTextToSize(SCHOOLS[state.school], colW).slice(0, 2);
+  const boxH = colegio.length > 1 ? 21 : 16;
   doc.setFillColor(...CREAM);
-  doc.rect(M, y, R - M, 16, 'F');
+  doc.rect(M, y, R - M, boxH, 'F');
   doc.setFontSize(8);
   doc.setTextColor(...MUTED);
   doc.text('CLIENTE', M + 4, y + 6);
   doc.text('COLEGIO', M + 76, y + 6);
+  if (nivel) doc.text('NIVEL', M + 152, y + 6);
   doc.setFontSize(10.5);
   doc.setTextColor(...NAVY);
   doc.setFont('helvetica', 'bold');
   doc.text(doc.splitTextToSize(state.nombre || 'Consumidor final', 66)[0], M + 4, y + 12);
-  doc.text(doc.splitTextToSize(SCHOOLS[state.school], R - M - 80)[0], M + 76, y + 12);
+  doc.text(colegio, M + 76, y + 12);
+  if (nivel) doc.text(doc.splitTextToSize(nivel, 26)[0], M + 152, y + 12);
   doc.setFont('helvetica', 'normal');
-  y += 24;
+  y += boxH + 8;
 
   /* ----- Tabla de prendas ----- */
   const cols = [
@@ -168,7 +175,7 @@ async function buildBudgetPDF(now = new Date()) {
   });
 
   /* ----- Totales ----- */
-  if (y + 52 > BOTTOM) { doc.addPage(); header(); y = 58; }
+  if (y + 64 > BOTTOM) { doc.addPage(); header(); y = 58; }
   y += 6;
   const bx = R - 82;
   const line = (label, value, opts = {}) => {
@@ -197,6 +204,9 @@ async function buildBudgetPDF(now = new Date()) {
   y += 13;
   line('Total en 3 pagos', pesos(tot.tres), {bold: true});
   line(`3 pagos de ${pesos(tot.tres / 3)}`, '', {color: MUTED, size: 8.5});
+  const seis = Math.round(tot.lista * (100 - SEIS_PAGOS.descuento) / 100);
+  line('Total en 6 pagos', pesos(seis), {bold: true});
+  line(`6 pagos de ${pesos(seis / 6)}`, '', {color: MUTED, size: 8.5});
 
   /* ----- Condiciones ----- */
   let ny = y + 6;

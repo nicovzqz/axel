@@ -6,3 +6,7 @@ uniformes_m.html
 WhatsApp Image*
 .claude/
 __pycache__/
+*.docx
+!lista_web.xlsx
+.env
+node_modules/

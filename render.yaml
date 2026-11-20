@@ -1,0 +1,31 @@
+# Blueprint de Render: crea el sitio y la API desde este repositorio.
+# Render → New → Blueprint → elegir este repo. Después completar DATABASE_URL (Supabase).
+services:
+  # API que guarda los clientes del chat en Supabase (PostgreSQL).
+  - type: web
+    name: uniformes-m-api
+    runtime: node
+    rootDir: server
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: node src/index.js
+    healthCheckPath: /api/salud
+    envVars:
+      - key: NODE_VERSION
+        value: 20.17.0
+      # Supabase → Project Settings → Database → Connection string → "Session pooler" (URI).
+      - key: DATABASE_URL
+        sync: false
+      # Token para consultar clientes (/api/leads, /api/leads.csv, /api/resumen). Render lo genera.
+      - key: ADMIN_TOKEN
+        generateValue: true
+      # Sitios que pueden guardar datos. Sumar el dominio propio cuando esté configurado.
+      - key: ALLOWED_ORIGINS
+        value: https://uniformes-m.onrender.com
+
+  # Sitio público (estático). El dominio propio y el DNS se configuran en Render → Settings → Custom Domains.
+  - type: web
+    name: uniformes-m
+    runtime: static
+    buildCommand: echo "Sitio estatico, sin build"
+    staticPublishPath: .

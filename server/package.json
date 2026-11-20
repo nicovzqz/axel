@@ -1,0 +1,14 @@
+{
+  "name": "uniformes-m-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API que guarda en PostgreSQL los clientes que pasan por el asistente de Uniformes M",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "4.21.1",
+    "pg": "8.13.0"
+  }
+}

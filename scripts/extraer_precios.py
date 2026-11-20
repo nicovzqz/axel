@@ -1,10 +1,11 @@
-"""Genera precios.js para el armador de presupuestos a partir de la lista de Excel.
+"""Convierte la planilla vieja de precios en la plantilla nueva lista_web.csv (ver lista_web.py).
 
 Lee solo los precios de lista por talle de una hoja (por defecto la más nueva,
-"junio 2026 0,6"). No toca las hojas de costos.
+"junio 2026 0,6"). No toca las hojas de costos. Se usa una vez para arrancar;
+después Axel mantiene lista_web y el sitio se genera con scripts/lista_web.py.
 
 Uso:
-    python scripts/extraer_precios.py LISTAPRECIODELOSCOLEGIOS2025B.xlsx "junio 2026 0,6"
+    python scripts/extraer_precios.py LISTAPRECIODELOSCOLEGIOS2025B.xlsx "junio 2026 0,6" [--forzar]
 """
 import json
 import re
@@ -279,27 +280,60 @@ def extract(path, sheet):
     return date_cell, products
 
 
+def guess_niveles(nombre, colegio):
+    """Niveles que se deducen del nombre o del colegio; vacío = sirve para todos."""
+    n = norm(nombre)
+    found = [v for k, v in (('jardin', 'Jardín'), ('primaria', 'Primaria'), ('secundaria', 'Secundaria')) if k in n]
+    if not found and colegio in ('jb', 'jn'):
+        found = ['Jardín']
+    if not found and colegio == 'prof':
+        found = ['Profesorado']
+    return found
+
+
 def main():
-    path = sys.argv[1]
-    sheet = sys.argv[2] if len(sys.argv) > 2 else 'junio 2026 0,6'
-    out = Path(sys.argv[3]) if len(sys.argv) > 3 else Path(__file__).parent.parent / 'precios.js'
+    """Convierte la planilla vieja en la plantilla nueva (lista_web.csv), una sola vez.
+    Después Axel mantiene lista_web y el sitio se genera con scripts/lista_web.py."""
+    from lista_web import write_template, talle_col, TALLES
+    args = [a for a in sys.argv[1:] if a != '--forzar']
+    path = args[0]
+    sheet = args[1] if len(args) > 1 else 'junio 2026 0,6'
+    out = Path(args[2]) if len(args) > 2 else Path(__file__).parent.parent / 'lista_web.csv'
+    if out.exists() and '--forzar' not in sys.argv:
+        sys.exit(f'{out.name} ya existe y puede tener cambios de Axel. Usá --forzar para pisarlo.')
     fecha, products = extract(path, sheet)
-    data = {
-        'fuente': {'archivo': Path(path).name, 'hoja': sheet,
-                   'fecha': fecha.isoformat() if fecha else None},
-        'colegios': SCHOOLS,
-        'productos': [{
-            'id': f"p{p['fila']}", 'nombre': p['nombre'] + (f" ({p['nombre_extra']})" if p.get('nombre_extra') else ''),
-            'detalle': p['detalle'], 'linea': p['linea'], 'categoria': p['categoria'],
-            'promo': p['promo'], 'colegios': p['colegios'],
-            'talles': [{'t': t, 'p': v} for t, v in p['sizes']],
-        } for p in products],
-    }
-    js = ('/* Generado por scripts/extraer_precios.py. No editar a mano: '
-          'volvé a correr el script cuando cambie la lista. */\n'
-          'window.LISTA = ' + json.dumps(data, ensure_ascii=False, indent=1) + ';\n')
-    out.write_text(js, encoding='utf-8')
-    print(f'{len(products)} prendas, hoja "{sheet}" ({fecha}) -> {out}')
+    rows = []
+    for p in products:
+        nombre = p['nombre'] + (f" ({p['nombre_extra']})" if p.get('nombre_extra') else '')
+        prenda, _, modelo = nombre.partition(' ')
+        # Línea solo en las prendas de las promos Premium/Clásica (grupos A y B, o Clásica).
+        linea = 'Clásica' if p['linea'] == 'Clásica' else 'Premium' if p['promo'] in ('A', 'B') else ''
+        precios = {}
+        adultos = ['XL', 'XXL', 'XXXL', 'XXXXL']
+        for t, v in p['sizes']:
+            col = talle_col(t)
+            # Talle de adulto repetido (p. ej. "3/XXXL" dos veces): es el siguiente talle mal tipeado.
+            if col in precios and col in adultos[:-1] and adultos[adultos.index(col) + 1] not in precios:
+                nuevo = adultos[adultos.index(col) + 1]
+                print(f'  {nombre}: "{t}" repetido, se carga como {nuevo} ({v})', file=sys.stderr)
+                col = nuevo
+            if col in TALLES and col not in precios:
+                precios[col] = v
+            elif col not in TALLES:
+                print(f'  talle sin columna, se omite: {nombre} {t}', file=sys.stderr)
+        for c in p['colegios']:
+            rows.append({'Colegio': SCHOOLS[c], 'Nivel': ', '.join(guess_niveles(nombre, c)), 'Prenda': prenda,
+                         'Modelo': modelo, 'Línea': linea, 'Detalle': p['detalle'], **precios})
+    # Mismo modelo dos veces en un colegio: se numera para que Axel los distinga.
+    seen = {}
+    for r in rows:
+        k = (r['Colegio'], r['Prenda'], r['Modelo'])
+        seen[k] = seen.get(k, 0) + 1
+        if seen[k] > 1:
+            r['Modelo'] += f' (opción {seen[k]})'
+    rows.sort(key=lambda r: (list(SCHOOLS.values()).index(r['Colegio']), r['Prenda'], r['Modelo']))
+    write_template(rows, out)
+    print(f'{len(rows)} filas (prenda x colegio), hoja "{sheet}" ({fecha}) -> {out}')
 
 
 if __name__ == '__main__':
