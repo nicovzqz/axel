@@ -21,11 +21,11 @@ services:
         generateValue: true
       # Sitios que pueden guardar datos. Sumar el dominio propio cuando esté configurado.
       - key: ALLOWED_ORIGINS
-        value: https://uniformes-m.onrender.com
+        value: https://uniformesm.onrender.com
 
   # Sitio público (estático). El dominio propio y el DNS se configuran en Render → Settings → Custom Domains.
   - type: web
-    name: uniformes-m
+    name: uniformesm
     runtime: static
     buildCommand: echo "Sitio estatico, sin build"
     staticPublishPath: .

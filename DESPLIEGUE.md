@@ -17,19 +17,19 @@ Visitante ──► Sitio estático (Render) ──► API (Render) ──► Po
 1. Subir este repositorio a GitHub (ya está en `nicovzqz/axel`).
 2. En <https://render.com>: **New → Blueprint** → elegir el repo. Render lee `render.yaml` y crea:
    - `uniformes-m-api`: la API (Node).
-   - `uniformes-m`: el sitio estático.
+   - `uniformesm`: el sitio estático (https://uniformesm.onrender.com).
 3. Cuando lo pida, pegar en **DATABASE_URL** la URI de Supabase del paso 1.
 4. Verificar la API: `https://uniformes-m-api.onrender.com/api/salud` tiene que responder `{"ok":true}`.
 5. Si Render le dio otra dirección a la API (porque el nombre estaba ocupado), cambiarla en
    `assets/config.js` y subir el cambio.
 
 ## 3. Dominio propio (DNS en Render)
-1. En el sitio `uniformes-m` → **Settings → Custom Domains** → agregar el dominio (por ejemplo `uniformesm.com.ar`
+1. En el sitio `uniformesm` → **Settings → Custom Domains** → agregar el dominio (por ejemplo `uniformesm.com.ar`
    y `www.uniformesm.com.ar`).
 2. Cargar en el proveedor del dominio los registros que indica Render (CNAME para `www`, A/ALIAS para el dominio raíz)
    y esperar la verificación. Render emite el certificado HTTPS solo.
 3. En la API `uniformes-m-api` → **Environment** → **ALLOWED_ORIGINS**, agregar los dominios separados por coma:
-   `https://uniformes-m.onrender.com,https://uniformesm.com.ar,https://www.uniformesm.com.ar`
+   `https://uniformesm.onrender.com,https://uniformesm.com.ar,https://www.uniformesm.com.ar`
 
 ## 4. Ver los clientes
 - **Supabase → Table Editor → leads** (requiere iniciar sesión en Supabase). La vista `resumen_diario` muestra
