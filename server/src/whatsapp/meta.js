@@ -1,7 +1,7 @@
 // Conexión con la API oficial de WhatsApp (Cloud API de Meta): recibir avisos y enviar mensajes.
 const crypto = require('crypto');
 
-const VERSION = process.env.WHATSAPP_API_VERSION || 'v21.0';
+const VERSION = process.env.WHATSAPP_API_VERSION || 'v25.0';
 const TOKEN = process.env.WHATSAPP_TOKEN || '';
 const PHONE_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || '';
 const SECRETO = process.env.WHATSAPP_APP_SECRET || '';
@@ -56,25 +56,46 @@ function aFormatoMeta(para, msg) {
   }};
 }
 
+/* Argentina: WhatsApp avisa desde 549 + área + número, pero la lista de destinatarios de prueba de Meta
+   guarda el formato viejo 54 + área + 15 + número. Si Meta rechaza el número (131030), se prueban
+   esas variantes (área de 2, 3 o 4 cifras) y se recuerda la que funcionó. */
+const formatoQueAnda = new Map();
+function variantesAR(numero) {
+  if (!/^549\d{10}$/.test(numero)) return [];
+  const nacional = numero.slice(3);
+  return [2, 3, 4].map(n => '54' + nacional.slice(0, n) + '15' + nacional.slice(n));
+}
+
+async function postear(payload) {
+  const res = await fetch(`https://graph.facebook.com/${VERSION}/${PHONE_ID}/messages`, {
+    method: 'POST',
+    headers: {Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  return {ok: res.ok, status: res.status, texto: res.ok ? '' : await res.text()};
+}
+
 /* Envía los mensajes en orden (WhatsApp los muestra en el orden en que llegan). */
 async function enviar(para, mensajes) {
   for (const msg of mensajes) {
-    const payload = aFormatoMeta(para, msg);
     if (SIMULAR) {
-      console.log('[whatsapp simulado] →', para, JSON.stringify(payload));
+      console.log('[whatsapp simulado] →', para, JSON.stringify(aFormatoMeta(para, msg)));
       continue;
     }
-    const res = await fetch(`https://graph.facebook.com/${VERSION}/${PHONE_ID}/messages`, {
-      method: 'POST',
-      headers: {Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) {
-      const error = await res.text();
-      console.error(`WhatsApp no aceptó el mensaje (${res.status}):`, error.slice(0, 500));
+    let destino = formatoQueAnda.get(para) || para;
+    let r = await postear(aFormatoMeta(destino, msg));
+    if (!r.ok && r.texto.includes('131030')) {
+      for (const otro of variantesAR(para)) {
+        r = await postear(aFormatoMeta(otro, msg));
+        if (r.ok) { formatoQueAnda.set(para, otro); break; }
+        if (!r.texto.includes('131030')) break;
+      }
+    }
+    if (!r.ok) {
+      console.error(`WhatsApp no aceptó el mensaje (${r.status}):`, r.texto.slice(0, 500));
       break;
     }
   }
 }
 
-module.exports = {configurado, firmaValida, extraerMensajes, enviar, aFormatoMeta, SIMULAR};
+module.exports = {configurado, firmaValida, extraerMensajes, enviar, aFormatoMeta, variantesAR, SIMULAR};
