@@ -31,6 +31,17 @@ services:
       ADMIN_TOKEN: ${ADMIN_TOKEN:?Falta ADMIN_TOKEN en .env}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,https://uniformesm.onrender.com}
       PORT: "3000"
+      # Bot de WhatsApp: precios y promos del sitio, montados abajo.
+      DATOS_DIR: /datos
+      # En local, sin claves de Meta, el bot escribe sus respuestas en el registro (docker compose logs api).
+      WHATSAPP_DRY_RUN: ${WHATSAPP_DRY_RUN:-1}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-prueba-local}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
+    volumes:
+      - ./precios.js:/datos/precios.js:ro
+      - ./assets/comercial.js:/datos/assets/comercial.js:ro
     depends_on:
       db:
         condition: service_healthy

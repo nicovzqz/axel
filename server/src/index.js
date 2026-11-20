@@ -4,6 +4,7 @@
 //   GET  /api/leads.csv     lo mismo en CSV para abrir con Excel
 //   GET  /api/resumen       ingresos por día (requiere ADMIN_TOKEN)
 //   GET  /api/salud         chequeo de vida
+//   GET/POST /api/whatsapp/webhook   bot de WhatsApp (Cloud API de Meta), ver src/whatsapp/
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -32,7 +33,8 @@ const app = express();
 app.disable('x-powered-by');
 // Render (y cualquier proxy) manda la IP real del visitante en X-Forwarded-For.
 app.set('trust proxy', 1);
-app.use(express.json({limit: '20kb'}));
+// Se guarda el cuerpo original: Meta firma los avisos de WhatsApp sobre esos bytes exactos.
+app.use(express.json({limit: '200kb', verify: (req, res, buf) => { req.cuerpoOriginal = buf; }}));
 
 // CORS: solo los orígenes del sitio.
 app.use((req, res, next) => {
@@ -85,14 +87,10 @@ function limpiarPresupuesto(lista) {
   }));
 }
 
-app.post('/api/leads', limite, async (req, res) => {
-  const b = req.body;
-  const error = validar(b);
-  if (error) return res.status(400).json({error});
+/* Una fila por sesión: cada envío completa o actualiza lo que ya había. La usan la web y WhatsApp. */
+async function guardarLead(b) {
   const presupuesto = limpiarPresupuesto(b.presupuesto);
-  try {
-    // Una fila por sesión: cada envío completa o actualiza lo que ya había.
-    await pool.query(`
+  await pool.query(`
       INSERT INTO leads (sesion, etapa, nombre, telefono, colegio, nivel, anio, talle, presupuesto,
         total_lista, total_efectivo, total_3_pagos, total_6_pagos, reserva, descargo_pdf, abrio_whatsapp, origen)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
@@ -117,6 +115,13 @@ app.post('/api/leads', limite, async (req, res) => {
       texto(b.nivel, 30), texto(b.anio, 20), texto(b.talle, 12), presupuesto ? JSON.stringify(presupuesto) : null,
       entero(b.total_lista), entero(b.total_efectivo), entero(b.total_3_pagos), entero(b.total_6_pagos),
       texto(b.reserva, 60), b.descargo_pdf === true, b.abrio_whatsapp === true, texto(b.origen, 80)]);
+}
+
+app.post('/api/leads', limite, async (req, res) => {
+  const error = validar(req.body);
+  if (error) return res.status(400).json({error});
+  try {
+    await guardarLead(req.body);
     res.status(204).end();
   } catch (e) {
     console.error('Error guardando lead:', e.message);
@@ -172,6 +177,64 @@ app.get('/api/salud', async (req, res) => {
     res.status(503).json({ok: false});
   }
 });
+
+app.get('/', (req, res) => res.type('text/plain').send('API de Uniformes M funcionando. Chequeo: /api/salud'));
+
+// ---------- Bot de WhatsApp ----------
+const meta = require('./whatsapp/meta');
+const {cargar} = require('./whatsapp/datos');
+const {crearFlujo} = require('./whatsapp/flujo');
+const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || '';
+let flujo = null;
+try {
+  flujo = crearFlujo(cargar(), {
+    registrar: lead => {
+      if (validar(lead)) return;
+      guardarLead(lead).catch(e => console.error('Error guardando lead de WhatsApp:', e.message));
+    }
+  });
+} catch (e) {
+  console.error('Bot de WhatsApp desactivado, no se pudieron leer los precios:', e.message);
+}
+
+// Meta verifica el webhook una vez, al configurarlo, con el token que elegimos.
+app.get('/api/whatsapp/webhook', (req, res) => {
+  if (VERIFY_TOKEN && req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === VERIFY_TOKEN) {
+    return res.type('text/plain').send(String(req.query['hub.challenge'] || ''));
+  }
+  res.sendStatus(403);
+});
+
+// Mensajes que llegan. Se responde 200 enseguida (Meta reintenta si tarda) y se procesa después.
+const procesados = new Set();
+const colas = new Map();
+app.post('/api/whatsapp/webhook', (req, res) => {
+  if (!meta.firmaValida(req.cuerpoOriginal, req.get('X-Hub-Signature-256'))) return res.sendStatus(401);
+  res.sendStatus(200);
+  if (!flujo || !meta.configurado()) return;
+  for (const m of meta.extraerMensajes(req.body || {})) {
+    if (procesados.has(m.id)) continue;
+    procesados.add(m.id);
+    if (procesados.size > 2000) procesados.delete(procesados.values().next().value);
+    // Un mensaje por vez para cada número, en el orden en que llegaron.
+    const previa = colas.get(m.de) || Promise.resolve();
+    const actual = previa.then(() => atender(m)).catch(e => console.error('Error atendiendo WhatsApp:', e.message));
+    colas.set(m.de, actual);
+    actual.finally(() => { if (colas.get(m.de) === actual) colas.delete(m.de); });
+  }
+});
+
+async function atender(m) {
+  if (m.entrada.tipo === 'otro') {
+    return meta.enviar(m.de, [{tipo: 'texto', texto: 'Por ahora solo puedo leer mensajes de texto. Escribí *menú* para ver las opciones.'}]);
+  }
+  // El estado de cada conversación se guarda en la base: sobrevive a que Render duerma la API.
+  const {rows} = await pool.query('SELECT estado FROM wa_conversaciones WHERE telefono = $1', [m.de]);
+  const {estado, mensajes} = flujo.procesar(rows[0] && rows[0].estado, m.entrada, {telefono: m.de});
+  await pool.query(`INSERT INTO wa_conversaciones (telefono, estado) VALUES ($1, $2)
+    ON CONFLICT (telefono) DO UPDATE SET estado = EXCLUDED.estado, actualizado = now()`, [m.de, JSON.stringify(estado)]);
+  await meta.enviar(m.de, mensajes);
+}
 
 // Crea o actualiza la tabla y la vista al arrancar (en Supabase no hay otro paso de instalación).
 async function prepararBase() {

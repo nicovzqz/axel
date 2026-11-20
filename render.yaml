@@ -10,6 +10,12 @@ services:
     buildCommand: npm ci --omit=dev
     startCommand: node src/index.js
     healthCheckPath: /api/salud
+    # El bot de WhatsApp lee precios.js y assets/comercial.js: si cambian, también se vuelve a desplegar.
+    buildFilter:
+      paths:
+        - server/**
+        - precios.js
+        - assets/comercial.js
     envVars:
       - key: NODE_VERSION
         value: 20.17.0
@@ -22,6 +28,15 @@ services:
       # Sitios que pueden guardar datos. Sumar el dominio propio cuando esté configurado.
       - key: ALLOWED_ORIGINS
         value: https://uniformesm.onrender.com
+      # Bot de WhatsApp (Meta → app → WhatsApp → API Setup / Configuration). Ver DESPLIEGUE.md.
+      - key: WHATSAPP_VERIFY_TOKEN
+        generateValue: true
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_APP_SECRET
+        sync: false
 
   # Sitio público (estático). El dominio propio y el DNS se configuran en Render → Settings → Custom Domains.
   - type: web

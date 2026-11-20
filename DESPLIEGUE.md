@@ -48,3 +48,21 @@ Visitante ──► Sitio estático (Render) ──► API (Render) ──► Po
 docker compose up -d --build     # PostgreSQL + API en http://localhost:3000 + Adminer en http://localhost:8080
 ```
 El sitio local (`http://localhost:5173`) usa la API local automáticamente.
+
+## 5. Bot de WhatsApp (API oficial de Meta)
+El bot vive en la misma API (`/api/whatsapp/webhook`) y usa los mismos precios, promos y base que la web.
+
+**Etapa de prueba** (número de prueba gratuito de Meta; tu celular como destinatario autorizado):
+1. <https://developers.facebook.com> → **My Apps → Create App** → tipo **Business** → agregar el producto **WhatsApp**.
+2. **WhatsApp → API Setup**: anotar el **Phone number ID** del número de prueba y generar el **token temporal**
+   (dura 24 h). En **To**, agregar tu celular (+54 9 11 …) y confirmar el código que llega por WhatsApp.
+3. **App settings → Basic → App secret**: copiarlo.
+4. Render → `uniformes-m-api` → **Environment**: cargar `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`
+   y `WHATSAPP_APP_SECRET`, y guardar (se vuelve a desplegar).
+5. **WhatsApp → Configuration → Webhook**: Callback URL `https://uniformes-m-api.onrender.com/api/whatsapp/webhook`,
+   Verify token = el valor de `WHATSAPP_VERIFY_TOKEN` en Render. Después, en **Webhook fields**, suscribir `messages`.
+6. Desde tu celular, escribirle "hola" al número de prueba.
+
+**Para producción**: token permanente (Business Settings → System users), número real del local
+verificado en Meta y verificación de la empresa. En local, el bot responde en el registro
+(`docker compose logs api`) porque `WHATSAPP_DRY_RUN=1`.

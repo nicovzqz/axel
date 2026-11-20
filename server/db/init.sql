@@ -44,15 +44,23 @@ FROM leads
 GROUP BY 1
 ORDER BY 1 DESC;
 
+-- Estado de cada conversación del bot de WhatsApp (por número), para retomarla donde quedó.
+CREATE TABLE IF NOT EXISTS wa_conversaciones (
+  telefono     text        PRIMARY KEY,
+  estado       jsonb       NOT NULL,
+  actualizado  timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE wa_conversaciones ENABLE ROW LEVEL SECURITY;
+
 -- En Supabase existen los roles anon y authenticated (los de su API pública): sin acceso.
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE ALL ON leads, resumen_diario FROM anon;
+    REVOKE ALL ON leads, resumen_diario, wa_conversaciones FROM anon;
     REVOKE ALL ON SEQUENCE leads_id_seq FROM anon;
   END IF;
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE ALL ON leads, resumen_diario FROM authenticated;
+    REVOKE ALL ON leads, resumen_diario, wa_conversaciones FROM authenticated;
     REVOKE ALL ON SEQUENCE leads_id_seq FROM authenticated;
   END IF;
 END $$;

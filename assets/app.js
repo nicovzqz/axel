@@ -1,24 +1,14 @@
 /* Uniformes M: interacción del sitio y armador de presupuesto.
    Los precios vienen de precios.js (generado desde la lista de Excel). */
 
-/* PROMOCIONES: editá estos valores cuando cambie la promo.
-   El grupo de cada prenda (A, B o C) lo asigna scripts/extraer_precios.py.
-   "vence" es el último día de la promo, inclusive. */
-const PROMOS = {
-  A: {nombre: 'Pantalones, buzos y camperas Premium', efectivo: 45, tresPagos: 30, vence: '2026-11-30'},
-  B: {nombre: 'Remeras, chombas, shorts y polleras pantalón Premium', efectivo: 45, tresPagos: 0, vence: '2026-11-23'},
-  C: {nombre: 'Demás prendas', efectivo: 35, tresPagos: 20, vence: '2026-11-30'}
-};
-/* Descuento habitual cuando no hay promo vigente (columna EFC de la lista). */
-const SIN_PROMO = {efectivo: 20, tresPagos: 0};
-/* 6 pagos: por ahora precio de lista (0% de descuento). Confirmar con Axel. */
-const SEIS_PAGOS = {descuento: 0};
+/* Promociones, formas de pago y WhatsApp del local: se editan en assets/comercial.js
+   (los usa también el bot de WhatsApp). */
+const {PROMOS, PROMO_ORDER, SIN_PROMO, SEIS_PAGOS, WHATSAPP} = window.COMERCIAL;
 
 /* Armador de presupuesto en la página: oculto por ahora (pedido de Axel), el presupuesto
    se pide por el asistente, que termina en WhatsApp. Poné true para volver a mostrarlo. */
 const MOSTRAR_ARMADOR = false;
 
-const WHATSAPP = ['541128963629', '541123477515'];
 /* Orden y nombres tal como aparecen en el diseño. */
 const SCHOOL_ORDER = ['cjh', 'ib', 'sj', 'lm', 'isa', 'rd', 'jn', 'ijh', 'aguer', 'prof', 'jb', 'el', 'as'];
 const CATEGORY_ORDER = ['Pantalones y equipos', 'Buzos, camperas y abrigo', 'Remeras y chombas',
@@ -60,8 +50,7 @@ function prices(lista, group, on) {
 }
 const shortDate = iso => { const [, m, d] = iso.split('-'); return `${d}/${m}`; };
 
-/* Tabla de promos en el mismo orden que la pieza de la promo. Las vencidas no se muestran. */
-const PROMO_ORDER = ['A', 'C', 'B'];
+/* Tabla de promos en el orden de PROMO_ORDER. Las vencidas no se muestran. */
 function renderPromoBar() {
   const live = PROMO_ORDER.filter(g => activePromo(g)).map(g => PROMOS[g]);
   $('promo-bar').hidden = !live.length;
